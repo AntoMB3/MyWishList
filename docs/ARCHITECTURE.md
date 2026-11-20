@@ -4,9 +4,10 @@
 **MyWishList** es una aplicación web diseñada para centralizar enlaces de artículos de distintas tiendas en línea en una única lista de deseos personal y compartible. 
 
 ### Reglas de Negocio Principales
-1. **Lectura Pública:** Cualquier persona (sin necesidad de iniciar sesión) puede visualizar la wishlist de cualquier usuario mediante su enlace o buscador (`?user=username`).
-2. **Escritura Protegida (Autoría):** Solo un usuario autenticado puede crear artículos en su propia lista, y únicamente el autor original de un artículo puede editarlo o eliminarlo.
-3. **Campos del Artículo:**
+1. **Lectura Pública por Enlace:** Cualquier persona (sin necesidad de iniciar sesión) puede visualizar una wishlist conociendo su enlace compartido (`?list=<share_id>`). No existe un listado global de wishlists: solo se accede a la lista que se comparte.
+2. **Escritura Protegida (Autoría):** Solo un usuario autenticado puede crear wishlists propias y artículos dentro de ellas, y únicamente el dueño de la lista puede editarla, eliminarla o modificar sus artículos.
+3. **Campos de la Wishlist:** Título (Obligatorio) y Descripción (Opcional).
+4. **Campos del Artículo:**
    - **Título** (Obligatorio)
    - **Precio** (Obligatorio, numérico `>= 0`)
    - **Descripción** (Opcional)
@@ -35,18 +36,19 @@ MyWhishList/
 │   ├── config.py            # Variables de entorno y configuración global (pydantic-settings)
 │   ├── database.py          # Configuración de SQLAlchemy (Engine, SessionLocal, Base)
 │   ├── dependencies.py      # Inyección de dependencias (get_db, get_current_user)
-│   ├── models.py            # Modelos ORM de Base de Datos (User, WishlistItem)
+│   ├── models.py            # Modelos ORM de Base de Datos (User, Wishlist, WishlistItem)
 │   ├── schemas.py           # Esquemas Pydantic (DTOs de entrada y salida)
 │   ├── security.py          # Hashing de contraseñas y firma/validación de JWT
 │   ├── services/            # Capa de lógica de negocio y acceso a datos
 │   │   ├── __init__.py
-│   │   ├── auth_service.py  # Creación y verificación de usuarios
-│   │   └── item_service.py  # Operaciones CRUD y verificación de propiedad (ownership)
+│   │   ├── auth_service.py      # Creación y verificación de usuarios
+│   │   ├── wishlist_service.py  # CRUD de wishlists y compartición por share_id
+│   │   └── item_service.py      # CRUD de artículos y verificación de propiedad
 │   └── routers/             # Capa de controladores HTTP (Endpoints)
 │       ├── __init__.py
 │       ├── auth.py          # /api/auth (register, login, me)
-│       ├── wishlists.py     # /api/wishlists (lectura pública de listas y usuarios)
-│       └── items.py         # /api/items (escritura protegida: POST, PUT, DELETE)
+│       ├── wishlists.py     # /api/wishlists (mis listas, crear, ver por share_id)
+│       └── items.py         # /api/wishlists/{wishlist_id}/items (POST, PUT, DELETE)
 │
 ├── frontend/
 │   ├── index.html           # Vista principal (Modo Visitante y Modo Autor)
@@ -93,6 +95,16 @@ MyWhishList/
 | `hashed_password` | `VARCHAR(255)` | `NOT NULL` | Hash bcrypt/argon2 de la contraseña |
 | `created_at` | `DATETIME` | `DEFAULT CURRENT_TIMESTAMP` | Fecha de registro |
 
+### Tabla: `wishlists`
+| Columna | Tipo | Restricciones | Descripción |
+| :--- | :--- | :--- | :--- |
+| `id` | `INTEGER` | `PRIMARY KEY, AUTOINCREMENT` | Identificador interno |
+| `title` | `VARCHAR(100)` | `NOT NULL` | Nombre de la lista |
+| `description` | `TEXT` | `NULLABLE` | Descripción opcional |
+| `share_id` | `VARCHAR(32)` | `UNIQUE, NOT NULL, INDEX` | UUID hex opaco usado en el enlace compartido |
+| `user_id` | `INTEGER` | `FOREIGN KEY (users.id) ON DELETE CASCADE` | Dueño de la lista |
+| `created_at` | `DATETIME` | `DEFAULT CURRENT_TIMESTAMP` | Fecha de creación |
+
 ### Tabla: `wishlist_items`
 | Columna | Tipo | Restricciones | Descripción |
 | :--- | :--- | :--- | :--- |
@@ -102,8 +114,12 @@ MyWhishList/
 | `description` | `TEXT` | `NULLABLE` | Notas o detalles opcionales |
 | `url` | `VARCHAR(2048)` | `NOT NULL` | Enlace a la tienda en línea |
 | `image_url` | `VARCHAR(2048)` | `NOT NULL` | Enlace a la imagen del producto |
-| `user_id` | `INTEGER` | `FOREIGN KEY (users.id) ON DELETE CASCADE` | Autor/dueño del artículo |
+| `wishlist_id` | `INTEGER` | `FOREIGN KEY (wishlists.id) ON DELETE CASCADE` | Lista a la que pertenece |
 | `created_at` | `DATETIME` | `DEFAULT CURRENT_TIMESTAMP` | Fecha de creación |
+
+> Un usuario puede tener **varias wishlists**. Cada una se comparte con su propio
+> `share_id` opaco (UUID hex), por lo que no es enumerable. El autor de un
+> artículo se deduce de `item.wishlist.owner`.
 
 ---
 
@@ -111,13 +127,13 @@ MyWhishList/
 
 ### 5.1 Flujo de Lectura Pública (Cualquier Visitante)
 ```text
-[Navegador Visitante] 
-   │  1. Entra a /?user=alex
+[Navegador Visitante]
+   │  1. Entra a /?list=<share_id> (enlace compartido por el dueño)
    ▼
-[app.js] ── 2. GET /api/wishlists/alex (Sin Token) ──► [Router: wishlists.py]
-                                                               │
-                                                               ▼
-[app.js] ◄── 3. JSON { username, items: [...] } ────── [SQLite: SELECT items]
+[app.js] ── 2. GET /api/wishlists/{share_id} (Sin Token) ──► [Router: wishlists.py]
+                                                                    │
+                                                                    ▼
+[app.js] ◄── 3. JSON { share_id, owner_username, items: [...] } ── [SQLite: SELECT items]
    │
    ▼
 4. Renderiza tarjetas en modo lectura (sin botones Editar/Borrar)
@@ -126,15 +142,15 @@ MyWhishList/
 ### 5.2 Flujo de Escritura Protegida (Autor Logueado)
 ```text
 [Navegador Autor]
-   │  1. Envía formulario "Nuevo Artículo"
+   │  1. Envía formulario "Nuevo Artículo" dentro de una de sus listas
    ▼
-[app.js] ── 2. POST /api/items (Header: Bearer JWT) ──► [Dependency: get_current_user]
-                                                               │ (Valida firma JWT y extrae user)
-                                                               ▼
-                                                        [Schema: ItemCreate]
-                                                               │ (Valida URLs, precio >= 0)
-                                                               ▼
-[app.js] ◄── 3. HTTP 201 Created (ItemResponse JSON) ── [Service: Crea item con user.id]
+[app.js] ── 2. POST /api/wishlists/{wishlist_id}/items (Bearer JWT) ──► [Dependency: get_current_user]
+                                                                            │ (Valida firma JWT y extrae user)
+                                                                            ▼
+                                                                     [Schema: ItemCreate]
+                                                                            │ (Valida URLs, precio >= 0)
+                                                                            ▼
+[app.js] ◄── 3. HTTP 201 Created (ItemResponse JSON) ── [Service: crea item validando el dueño]
    │
    ▼
 4. Agrega tarjeta al DOM con botones "Editar" y "Eliminar"
@@ -145,13 +161,16 @@ MyWhishList/
 | Método | Endpoint | Acceso | Descripción | Códigos HTTP |
 | :--- | :--- | :--- | :--- | :--- |
 | `POST` | `/api/auth/register` | Público | Registra un nuevo usuario | `201`, `400`, `422` |
-| `POST` | `/api/auth/login` | Público | Autentica y devuelve Token JWT | `200`, `401` |
+| `POST` | `/api/auth/login` | Público | Autentica y devuelve Token JWT | `200`, `401`, `422` |
 | `GET` | `/api/auth/me` | **Protegido** | Devuelve datos del usuario logueado | `200`, `401` |
-| `GET` | `/api/wishlists` | Público | Lista usuarios con wishlists públicas | `200` |
-| `GET` | `/api/wishlists/{username}` | Público | Obtiene la wishlist completa de `{username}` | `200`, `404` |
-| `POST` | `/api/items` | **Protegido** | Crea un artículo en la lista del usuario actual | `201`, `401`, `422` |
-| `PUT` | `/api/items/{item_id}` | **Protegido (Autor)** | Edita un artículo si pertenece al usuario actual | `200`, `401`, `403`, `404` |
-| `DELETE` | `/api/items/{item_id}` | **Protegido (Autor)** | Elimina un artículo si pertenece al usuario actual | `204`, `401`, `403`, `404` |
+| `GET` | `/api/wishlists/mine` | **Protegido** | Lista las wishlists del usuario actual | `200`, `401` |
+| `POST` | `/api/wishlists` | **Protegido** | Crea una wishlist propia | `201`, `401`, `422` |
+| `GET` | `/api/wishlists/{share_id}` | Público | Obtiene una wishlist compartida | `200`, `404`, `422` |
+| `PUT` | `/api/wishlists/{wishlist_id}` | **Protegido (Autor)** | Edita una wishlist propia | `200`, `401`, `403`, `404`, `422` |
+| `DELETE` | `/api/wishlists/{wishlist_id}` | **Protegido (Autor)** | Elimina una wishlist y sus artículos | `204`, `401`, `403`, `404` |
+| `POST` | `/api/wishlists/{wishlist_id}/items` | **Protegido (Autor)** | Crea un artículo en una lista propia | `201`, `401`, `403`, `404`, `422` |
+| `PUT` | `/api/wishlists/{wishlist_id}/items/{item_id}` | **Protegido (Autor)** | Edita un artículo propio | `200`, `401`, `403`, `404`, `422` |
+| `DELETE` | `/api/wishlists/{wishlist_id}/items/{item_id}` | **Protegido (Autor)** | Elimina un artículo propio | `204`, `401`, `403`, `404` |
 
 ---
 
@@ -159,9 +178,15 @@ MyWhishList/
 
 1. **Prevención de IDOR (Insecure Direct Object Reference):**
    - Nunca confiar en que ocultar los botones en el frontend protege la aplicación.
-   - En `PUT /api/items/{id}` y `DELETE /api/items/{id}`, el backend debe verificar explícitamente:
-     - Si el artículo no existe -> `404 Not Found`.
-     - Si `item.user_id != current_user.id` -> `403 Forbidden`.
+   - En `PUT`/`DELETE` de wishlists y artículos, el backend debe verificar explícitamente:
+     - Si la wishlist (o el artículo) no existe -> `404 Not Found`.
+     - Si `wishlist.user_id != current_user.id` -> `403 Forbidden`.
+   - Los artículos se validan a través de su wishlist: un `item_id` de otra lista
+     no debe poder editarse aunque se conozca.
+2. **Compartición no enumerable:**
+   - El enlace público usa `share_id` (UUID hex de 32 caracteres), nunca el
+     `id` numérico ni el `username`, para evitar recorrer listas ajenas.
+   - No existe endpoint de listado global de wishlists.
 2. **Prevención de XSS (Cross-Site Scripting):**
    - **En Backend:** Validar que `url` e `image_url` utilicen exclusivamente esquemas `http://` o `https://` mediante `HttpUrl` de Pydantic (bloqueando vectores como `javascript:alert(1)`).
    - **En Frontend:** Prohibido concatenar datos del usuario dentro de `.innerHTML`. Se debe construir el DOM con `document.createElement()` y asignar textos mediante `.textContent`.
@@ -171,7 +196,7 @@ MyWhishList/
    - Secretos (`SECRET_KEY`) cargados desde `.env`, nunca expuestos en el código fuente.
    - Tokens JWT con tiempo de expiración definido (`exp`, ej. 24 horas).
 4. **Normalización de `username`:**
-   - Validación por expresión regular `^[a-zA-Z0-9_-]{3,30}$` y conversión a minúsculas para garantizar URLs limpias y compartibles (`?user=username`).
+   - Validación por expresión regular `^[a-zA-Z0-9_-]{3,30}$` y conversión a minúsculas para normalizar el identificador de cuenta.
 5. **Manejo de Imágenes Rotos (Broken Links) y Precios:**
    - Los elementos `<img>` tendrán un manejador `onerror` para cargar un SVG/imagen *placeholder* local si la tienda externa bloquea la imagen o el link caduca.
    - Los precios se almacenan como `Numeric(10, 2)` / `Decimal` en Python para evitar errores de precisión de punto flotante (`float`).
@@ -205,21 +230,23 @@ MyWhishList/
 ### Fase 1: Configuración Inicial y Base de Datos
 - [x] Crear estructura de carpetas (`backend/`, `frontend/`, `tests/`).
 - [x] Configurar archivo `requirements.txt`, `.gitignore` y `.env.example`.
-- [ ] Implementar `backend/config.py` y `backend/database.py` (conexión SQLite).
-- [ ] Definir modelos `User` y `WishlistItem` en `backend/models.py`.
-- [ ] Definir esquemas de validación Pydantic en `backend/schemas.py`.
+- [x] Implementar `backend/config.py` y `backend/database.py` (conexión SQLite).
+- [x] Definir modelos `User`, `Wishlist` y `WishlistItem` en `backend/models.py`.
+- [x] Definir esquemas de validación Pydantic en `backend/schemas.py`.
+- [x] Definir contratos de routers y servicios (dictado de endpoints HTTP).
 
 ### Fase 2: Seguridad y Autenticación (Backend)
 - [ ] Implementar hashing de contraseñas y funciones JWT en `backend/security.py`.
 - [ ] Implementar dependencia `get_current_user` en `backend/dependencies.py`.
 - [ ] Crear servicio `backend/services/auth_service.py`.
-- [ ] Crear endpoints `/api/auth/register`, `/api/auth/login` y `/api/auth/me` en `backend/routers/auth.py`.
+- [x] Crear endpoints `/api/auth/register`, `/api/auth/login` y `/api/auth/me` en `backend/routers/auth.py`.
 
 ### Fase 3: Lógica de Wishlists e Items (Backend)
-- [ ] Crear servicio `backend/services/item_service.py` (CRUD + validación de propietario).
-- [ ] Crear endpoints públicos `GET /api/wishlists` y `GET /api/wishlists/{username}` en `backend/routers/wishlists.py`.
-- [ ] Crear endpoints protegidos `POST`, `PUT`, `DELETE` en `backend/routers/items.py`.
-- [ ] Integrar routers y servir archivos estáticos del frontend en `backend/main.py`.
+- [ ] Crear servicio `backend/services/wishlist_service.py` (CRUD, `share_id` y validación de dueño).
+- [ ] Crear servicio `backend/services/item_service.py` (CRUD + validación de dueño vía wishlist).
+- [x] Crear endpoints públicos y protegidos en `backend/routers/wishlists.py`.
+- [x] Crear endpoints protegidos de artículos en `backend/routers/items.py`.
+- [x] Integrar routers en `backend/main.py`.
 
 ### Fase 4: Frontend - Estilos Base y Autenticación
 - [ ] Diseñar sistema de estilos en `frontend/css/styles.css` (Grid de tarjetas, formularios, navbar, responsive).
@@ -227,10 +254,10 @@ MyWhishList/
 - [ ] Construir `frontend/login.html` y su lógica en `frontend/js/auth.js` (login, registro, guardado de token).
 
 ### Fase 5: Frontend - Wishlist Pública y Panel de Autor
-- [ ] Construir estructura principal en `frontend/index.html` (barra de navegación, buscador de usuarios, contenedor de tarjetas, formulario/modal de artículo).
+- [ ] Construir estructura principal en `frontend/index.html` (barra de navegación, panel de wishlists propias, contenedor de tarjetas, formulario/modal de artículo).
 - [ ] Implementar renderizado seguro de tarjetas (`textContent`, fallback de imágenes) en `frontend/js/app.js`.
 - [ ] Implementar detección de modo Visitante vs. modo Autor (mostrar/ocultar controles de creación, edición y borrado según usuario logueado).
-- [ ] Implementar botón "Compartir Wishlist" (copiar URL `?user=username` al portapapeles).
+- [ ] Implementar botón "Compartir Wishlist" (copiar la URL pública `?list=<share_id>` al portapapeles).
 
 ### Fase 6: Pruebas y Pulido Final
 - [ ] Verificar casos borde (URLs inválidas, intento de borrar ítem ajeno -> `403`, usuario no encontrado -> `404`, imágenes rotas).

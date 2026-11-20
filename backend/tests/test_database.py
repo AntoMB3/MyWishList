@@ -10,11 +10,19 @@ from sqlalchemy.orm import Session
 
 from backend import main
 from backend.database import create_db_engine
-from backend.models import User, WishlistItem
+from backend.models import User, Wishlist, WishlistItem
 
-EXPECTED_TABLES = {"users", "wishlist_items"}
+EXPECTED_TABLES = {"users", "wishlists", "wishlist_items"}
 EXPECTED_COLUMNS = {
     "users": {"id", "username", "hashed_password", "created_at"},
+    "wishlists": {
+        "id",
+        "title",
+        "description",
+        "share_id",
+        "user_id",
+        "created_at",
+    },
     "wishlist_items": {
         "id",
         "title",
@@ -22,10 +30,16 @@ EXPECTED_COLUMNS = {
         "description",
         "url",
         "image_url",
-        "user_id",
+        "wishlist_id",
         "created_at",
     },
 }
+
+
+def _new_wishlist(**overrides: object) -> Wishlist:
+    values: dict[str, object] = {"title": "Cumpleaños", "description": None}
+    values.update(overrides)
+    return Wishlist(**values)
 
 
 def _new_item(**overrides: object) -> WishlistItem:
@@ -70,27 +84,72 @@ def test_lifespan_creates_database_and_tables(
     lifespan_engine.dispose()
 
 
-def test_deleting_user_cascades_to_items(session: Session) -> None:
+def test_wishlist_gets_unique_share_id(session: Session) -> None:
+    first = _new_wishlist()
+    second = _new_wishlist()
     user = User(username="alex", hashed_password="hash")
-    user.items.append(_new_item())
+    user.wishlists.extend([first, second])
     session.add(user)
     session.commit()
 
-    # Borrado directo en SQL para comprobar la FK de la BD,
+    assert len(first.share_id) == 32
+    assert first.share_id != second.share_id
+
+
+def test_share_id_must_be_unique(session: Session) -> None:
+    user = User(username="alex", hashed_password="hash")
+    user.wishlists.extend(
+        [
+            _new_wishlist(share_id="a" * 32),
+            _new_wishlist(share_id="a" * 32),
+        ]
+    )
+    session.add(user)
+    with pytest.raises(IntegrityError):
+        session.commit()
+    session.rollback()
+
+
+def test_deleting_user_cascades_to_wishlists_and_items(session: Session) -> None:
+    user = User(username="alex", hashed_password="hash")
+    wishlist = _new_wishlist()
+    wishlist.items.append(_new_item())
+    user.wishlists.append(wishlist)
+    session.add(user)
+    session.commit()
+
+    # Borrado directo en SQL para comprobar las FKs de la BD,
     # no solo la cascada del ORM.
     session.execute(delete(User).where(User.id == user.id))
     session.commit()
 
-    remaining = session.scalar(select(func.count()).select_from(WishlistItem))
-    assert remaining == 0
+    assert session.scalar(select(func.count()).select_from(Wishlist)) == 0
+    assert session.scalar(select(func.count()).select_from(WishlistItem)) == 0
+
+
+def test_deleting_wishlist_cascades_to_items(session: Session) -> None:
+    user = User(username="alex", hashed_password="hash")
+    wishlist = _new_wishlist()
+    wishlist.items.append(_new_item())
+    user.wishlists.append(wishlist)
+    session.add(user)
+    session.commit()
+
+    session.execute(delete(Wishlist).where(Wishlist.id == wishlist.id))
+    session.commit()
+
+    assert session.scalar(select(func.count()).select_from(WishlistItem)) == 0
+    assert session.scalar(select(func.count()).select_from(Wishlist)) == 0
 
 
 def test_price_cannot_be_negative(session: Session) -> None:
     user = User(username="alex", hashed_password="hash")
+    wishlist = _new_wishlist()
+    user.wishlists.append(wishlist)
     session.add(user)
     session.commit()
 
-    session.add(_new_item(price=Decimal("-0.01"), user_id=user.id))
+    session.add(_new_item(price=Decimal("-0.01"), wishlist_id=wishlist.id))
     with pytest.raises(IntegrityError):
         session.commit()
     session.rollback()

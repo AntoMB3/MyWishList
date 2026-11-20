@@ -11,6 +11,7 @@ dependencies = [
     "fastapi>=0.164.0",
     "pydantic>=2.14.3",
     "pydantic-settings>=2.16.3",
+    "python-multipart>=0.0.34",
     "sqlalchemy>=2.1.9",
     "uvicorn[standard]>=0.54.0",
 ]
@@ -27,5 +28,6 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "pytest>=9.2.0",
 ]
