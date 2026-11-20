@@ -23,7 +23,7 @@ El proyecto implementa una arquitectura **Cliente-Servidor desacoplada** (API RE
 ### 2.1 Stack Tecnológico
 - **Backend:** Python 3.14+, FastAPI, SQLAlchemy (ORM), Pydantic (Validación).
 - **Base de Datos:** SQLite (archivo local `wishlist.db`).
-- **Seguridad:** `pwdlib` / `bcrypt` (Hashing de contraseñas), `PyJWT` (JSON Web Tokens).
+- **Seguridad:** `pwdlib` con Argon2 (Hashing de contraseñas), `PyJWT` (JSON Web Tokens HS256).
 - **Frontend:** HTML5 semántico, CSS3 moderno (Custom Properties, Flexbox, CSS Grid), Vanilla JavaScript (`fetch` API, ES6 Modules).
 
 ### 2.2 Estructura de Directorios (Arquitectura en Capas)
@@ -192,9 +192,9 @@ MyWhishList/
    - **En Frontend:** Prohibido concatenar datos del usuario dentro de `.innerHTML`. Se debe construir el DOM con `document.createElement()` y asignar textos mediante `.textContent`.
    - En los enlaces `<a href="...">`, incluir siempre `target="_blank" rel="noopener noreferrer"`.
 3. **Seguridad de Contraseñas y JWT:**
-   - Contraseñas hasheadas con algoritmo `bcrypt` (nunca texto plano).
-   - Secretos (`SECRET_KEY`) cargados desde `.env`, nunca expuestos en el código fuente.
-   - Tokens JWT con tiempo de expiración definido (`exp`, ej. 24 horas).
+   - Contraseñas hasheadas con **Argon2** mediante `pwdlib` (nunca texto plano).
+   - Secretos (`SECRET_KEY`) cargados desde `.env`, nunca expuestos en el código fuente. Debe tener al menos 32 caracteres; existe un valor de desarrollo por defecto que no debe usarse en producción.
+   - Tokens JWT firmados con HS256 y tiempo de expiración definido (`exp`, 24 horas por defecto vía `ACCESS_TOKEN_EXPIRE_MINUTES`). El `sub` contiene el id del usuario.
 4. **Normalización de `username`:**
    - Validación por expresión regular `^[a-zA-Z0-9_-]{3,30}$` y conversión a minúsculas para normalizar el identificador de cuenta.
 5. **Manejo de Imágenes Rotos (Broken Links) y Precios:**
@@ -236,14 +236,14 @@ MyWhishList/
 - [x] Definir contratos de routers y servicios (dictado de endpoints HTTP).
 
 ### Fase 2: Seguridad y Autenticación (Backend)
-- [ ] Implementar hashing de contraseñas y funciones JWT en `backend/security.py`.
-- [ ] Implementar dependencia `get_current_user` en `backend/dependencies.py`.
-- [ ] Crear servicio `backend/services/auth_service.py`.
+- [x] Implementar hashing de contraseñas y funciones JWT en `backend/security.py`.
+- [x] Implementar dependencia `get_current_user` en `backend/dependencies.py`.
+- [x] Crear servicio `backend/services/auth_service.py`.
 - [x] Crear endpoints `/api/auth/register`, `/api/auth/login` y `/api/auth/me` en `backend/routers/auth.py`.
 
 ### Fase 3: Lógica de Wishlists e Items (Backend)
-- [ ] Crear servicio `backend/services/wishlist_service.py` (CRUD, `share_id` y validación de dueño).
-- [ ] Crear servicio `backend/services/item_service.py` (CRUD + validación de dueño vía wishlist).
+- [x] Crear servicio `backend/services/wishlist_service.py` (CRUD, `share_id` y validación de dueño).
+- [x] Crear servicio `backend/services/item_service.py` (CRUD + validación de dueño vía wishlist).
 - [x] Crear endpoints públicos y protegidos en `backend/routers/wishlists.py`.
 - [x] Crear endpoints protegidos de artículos en `backend/routers/items.py`.
 - [x] Integrar routers en `backend/main.py`.

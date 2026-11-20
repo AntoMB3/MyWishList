@@ -9,6 +9,11 @@ wheels/
 # Virtual environments
 .venv
 
+# Local environment variables (secretos); .env.example sí se versiona
+.env
+.env.*
+!.env.example
+
 # Local database and pytest cache
 *.db
 *.db-journal
