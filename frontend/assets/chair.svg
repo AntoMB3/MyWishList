@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Silla ergonómica">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c1912"/>
+      <stop offset="1" stop-color="#111116"/>
+    </linearGradient>
+    <linearGradient id="seat" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#453b26"/>
+      <stop offset="1" stop-color="#2b251a"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="330" cy="60" r="58" fill="#d4af37" opacity="0.08"/>
+  <circle cx="66" cy="248" r="48" fill="#d4af37" opacity="0.06"/>
+  <path d="M138 62c0-10 8-18 18-18h88c10 0 18 8 18 18v92c0 10-8 18-18 18h-88c-10 0-18-8-18-18z" fill="url(#seat)" stroke="#c9a227" stroke-width="2.5"/>
+  <rect x="156" y="58" width="88" height="82" rx="14" fill="#d4af37" opacity="0.14"/>
+  <rect x="126" y="172" width="148" height="26" rx="13" fill="#3a3122" stroke="#c9a227" stroke-width="2"/>
+  <rect x="192" y="198" width="16" height="44" fill="#5b5344"/>
+  <rect x="146" y="242" width="108" height="12" rx="6" fill="#8d8678"/>
+  <path d="M132 260 108 276M268 260l24 16M200 254v22" stroke="#6d685e" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="106" cy="280" r="9" fill="#17150f" stroke="#c9a227" stroke-width="2"/>
+  <circle cx="294" cy="280" r="9" fill="#17150f" stroke="#c9a227" stroke-width="2"/>
+  <circle cx="200" cy="280" r="9" fill="#17150f" stroke="#c9a227" stroke-width="2"/>
+</svg>

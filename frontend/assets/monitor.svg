@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Monitor de escritorio">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e1a12"/>
+      <stop offset="1" stop-color="#111116"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#171208"/>
+      <stop offset="1" stop-color="#241c0c"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="300" fill="url(#bg)"/>
+  <circle cx="62" cy="70" r="56" fill="#d4af37" opacity="0.07"/>
+  <circle cx="348" cy="236" r="64" fill="#d4af37" opacity="0.05"/>
+  <rect x="56" y="64" width="288" height="164" rx="14" fill="#0d0d11"/>
+  <rect x="56" y="64" width="288" height="164" rx="14" fill="none" stroke="#c9a227" stroke-width="1.5" opacity="0.35"/>
+  <rect x="68" y="76" width="264" height="140" rx="8" fill="url(#screen)"/>
+  <rect x="86" y="96" width="92" height="14" rx="7" fill="#e9c766" opacity="0.9"/>
+  <rect x="86" y="122" width="150" height="10" rx="5" fill="#c9a227" opacity="0.55"/>
+  <rect x="86" y="142" width="120" height="10" rx="5" fill="#c9a227" opacity="0.35"/>
+  <rect x="86" y="172" width="62" height="22" rx="11" fill="#d4af37"/>
+  <rect x="176" y="228" width="48" height="34" fill="#332c1f"/>
+  <rect x="132" y="258" width="136" height="12" rx="6" fill="#c9a227"/>
+</svg>
