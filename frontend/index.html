@@ -12,7 +12,7 @@
 
   <header class="navbar">
     <div class="container navbar__inner">
-      <a class="brand" href="index.html">
+      <a class="brand" href="/">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8Z"/>
@@ -22,11 +22,11 @@
       </a>
 
       <nav class="navbar__actions" aria-label="Cuenta">
-        <div class="user-chip">
-          <span class="user-chip__avatar" aria-hidden="true">AD</span>
+        <div class="user-chip" hidden>
+          <span class="user-chip__avatar" aria-hidden="true"></span>
           <span class="user-chip__meta">
-            <span class="user-chip__name">alex_demo</span>
-            <span class="user-chip__role">4 listas</span>
+            <span class="user-chip__name"></span>
+            <span class="user-chip__role">0 listas</span>
           </span>
         </div>
         <span class="navbar__divider" aria-hidden="true"></span>
@@ -50,7 +50,7 @@
         <p class="page-head__sub">Crea una lista para cada ocasión y comparte solo la que quieras. Nadie más puede ver tu colección completa.</p>
       </div>
       <div class="page-head__actions">
-        <span class="count-pill" id="wishlist-count">4 listas</span>
+        <span class="count-pill" id="wishlist-count">0 listas</span>
         <button class="btn btn--primary" type="button" data-modal-open="wishlist-modal" data-new="wishlist">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 5v14M5 12h14"/>
@@ -60,258 +60,7 @@
       </div>
     </section>
 
-    <section class="wishlist-grid" id="wishlist-grid" aria-label="Listas de deseos">
-
-      <!-- Wishlist 1 -->
-      <article class="wishlist-card"
-               data-title="Setup Home Office 2026"
-               data-description="Todo lo que necesito para montar mi escritorio definitivo: audio, periféricos y ergonomía."
-               data-share="http://localhost:8000/?list=8f3c2b7d9a4e4c1f9b5d6a7e8f901234">
-        <div class="wishlist-card__top">
-          <span class="wishlist-card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="2" y="4" width="20" height="14" rx="2"/>
-              <path d="M8 21h8M12 18v3"/>
-            </svg>
-          </span>
-          <span class="badge badge--success">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M20 6 9 17l-5-5"/>
-            </svg>
-            Compartida
-          </span>
-        </div>
-        <h2 class="wishlist-card__title"><a href="wishlist.html">Setup Home Office 2026</a></h2>
-        <p class="wishlist-card__desc">Todo lo que necesito para montar mi escritorio definitivo: audio, periféricos y ergonomía.</p>
-        <div class="wishlist-card__meta">
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-              <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
-            </svg>
-            6 artículos
-          </span>
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18"/>
-            </svg>
-            12 nov 2026
-          </span>
-        </div>
-        <div class="wishlist-card__actions">
-          <a class="btn btn--primary btn--sm" href="wishlist.html">Ver artículos</a>
-          <div class="wishlist-card__tools">
-            <button class="btn btn--ghost btn--icon" type="button" data-action="share"
-                    data-share="http://localhost:8000/?list=8f3c2b7d9a4e4c1f9b5d6a7e8f901234"
-                    title="Copiar enlace para compartir" aria-label="Copiar enlace para compartir">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
-                <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-wishlist"
-                    title="Editar wishlist" aria-label="Editar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-wishlist"
-                    title="Eliminar wishlist" aria-label="Eliminar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Wishlist 2 -->
-      <article class="wishlist-card"
-               data-title="Regalos de Cumpleaños"
-               data-description="Ideas para familiares y amigos. Nada de tarjetas de regalo, por favor."
-               data-share="http://localhost:8000/?list=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d">
-        <div class="wishlist-card__top">
-          <span class="wishlist-card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="8" width="18" height="4" rx="1"/>
-              <path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/>
-              <path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/>
-            </svg>
-          </span>
-          <span class="badge badge--soft">Privada</span>
-        </div>
-        <h2 class="wishlist-card__title"><a href="wishlist.html">Regalos de Cumpleaños</a></h2>
-        <p class="wishlist-card__desc">Ideas para familiares y amigos. Nada de tarjetas de regalo, por favor.</p>
-        <div class="wishlist-card__meta">
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-              <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
-            </svg>
-            4 artículos
-          </span>
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18"/>
-            </svg>
-            3 nov 2026
-          </span>
-        </div>
-        <div class="wishlist-card__actions">
-          <a class="btn btn--primary btn--sm" href="wishlist.html">Ver artículos</a>
-          <div class="wishlist-card__tools">
-            <button class="btn btn--ghost btn--icon" type="button" data-action="share"
-                    data-share="http://localhost:8000/?list=1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
-                    title="Copiar enlace para compartir" aria-label="Copiar enlace para compartir">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
-                <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-wishlist"
-                    title="Editar wishlist" aria-label="Editar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-wishlist"
-                    title="Eliminar wishlist" aria-label="Eliminar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Wishlist 3 -->
-      <article class="wishlist-card"
-               data-title="Lecturas Pendientes"
-               data-description="Libros que quiero leer este año, entre ensayo, novela y algo de tecnología."
-               data-share="http://localhost:8000/?list=9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b">
-        <div class="wishlist-card__top">
-          <span class="wishlist-card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/>
-              <path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/>
-            </svg>
-          </span>
-          <span class="badge badge--soft">Privada</span>
-        </div>
-        <h2 class="wishlist-card__title"><a href="wishlist.html">Lecturas Pendientes</a></h2>
-        <p class="wishlist-card__desc">Libros que quiero leer este año, entre ensayo, novela y algo de tecnología.</p>
-        <div class="wishlist-card__meta">
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-              <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
-            </svg>
-            8 artículos
-          </span>
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18"/>
-            </svg>
-            28 oct 2026
-          </span>
-        </div>
-        <div class="wishlist-card__actions">
-          <a class="btn btn--primary btn--sm" href="wishlist.html">Ver artículos</a>
-          <div class="wishlist-card__tools">
-            <button class="btn btn--ghost btn--icon" type="button" data-action="share"
-                    data-share="http://localhost:8000/?list=9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b"
-                    title="Copiar enlace para compartir" aria-label="Copiar enlace para compartir">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
-                <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-wishlist"
-                    title="Editar wishlist" aria-label="Editar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-wishlist"
-                    title="Eliminar wishlist" aria-label="Eliminar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Wishlist 4 -->
-      <article class="wishlist-card"
-               data-title="Viaje a la Patagonia"
-               data-description="Equipo básico para la ruta: mochila, abrigo técnico y una buena cámara."
-               data-share="http://localhost:8000/?list=5c4b3a2d1e0f9a8b7c6d5e4f3a2b1c0d">
-        <div class="wishlist-card__top">
-          <span class="wishlist-card__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="m8 3 4 8 4-8M3 12h18M5 12l-2 7h18l-2-7"/>
-            </svg>
-          </span>
-          <span class="badge badge--muted">Borrador</span>
-        </div>
-        <h2 class="wishlist-card__title"><a href="wishlist.html">Viaje a la Patagonia</a></h2>
-        <p class="wishlist-card__desc">Equipo básico para la ruta: mochila, abrigo técnico y una buena cámara.</p>
-        <div class="wishlist-card__meta">
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
-              <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
-            </svg>
-            3 artículos
-          </span>
-          <span class="meta-item">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2"/>
-              <path d="M16 2v4M8 2v4M3 10h18"/>
-            </svg>
-            15 oct 2026
-          </span>
-        </div>
-        <div class="wishlist-card__actions">
-          <a class="btn btn--primary btn--sm" href="wishlist.html">Ver artículos</a>
-          <div class="wishlist-card__tools">
-            <button class="btn btn--ghost btn--icon" type="button" data-action="share"
-                    data-share="http://localhost:8000/?list=5c4b3a2d1e0f9a8b7c6d5e4f3a2b1c0d"
-                    title="Copiar enlace para compartir" aria-label="Copiar enlace para compartir">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
-                <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-wishlist"
-                    title="Editar wishlist" aria-label="Editar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-wishlist"
-                    title="Eliminar wishlist" aria-label="Eliminar wishlist">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-    </section>
+    <section class="wishlist-grid" id="wishlist-grid" aria-label="Listas de deseos"></section>
 
     <div class="empty-state" id="wishlist-empty" hidden>
       <span class="empty-state__icon" aria-hidden="true">
@@ -325,8 +74,8 @@
     </div>
 
     <footer class="page-foot">
-      <span><strong>MyWishList</strong> · Fase 1 de diseño con datos de ejemplo.</span>
-      <span>Los cambios no se guardan todavía. La conexión con la API llega en la fase 2.</span>
+      <span><strong>MyWishList</strong> · Guarda, organiza y comparte tus listas de deseos.</span>
+      <span>Tus listas son privadas hasta que compartes su enlace único.</span>
     </footer>
 
   </main>
@@ -400,6 +149,6 @@
     </div>
   </dialog>
 
-  <script defer src="js/ui-mock.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -249,15 +249,15 @@ MyWhishList/
 - [x] Integrar routers en `backend/main.py`.
 
 ### Fase 4: Frontend - Estilos Base y Autenticación
-- [ ] Diseñar sistema de estilos en `frontend/css/styles.css` (Grid de tarjetas, formularios, navbar, responsive).
-- [ ] Implementar cliente `fetch` centralizado en `frontend/js/api.js`.
-- [ ] Construir `frontend/login.html` y su lógica en `frontend/js/auth.js` (login, registro, guardado de token).
+- [x] Diseñar sistema de estilos en `frontend/css/styles.css` (Grid de tarjetas, formularios, navbar, responsive).
+- [x] Implementar cliente `fetch` centralizado en `frontend/js/api.js`.
+- [x] Construir `frontend/login.html` y su lógica en `frontend/js/auth.js` (login, registro, guardado de token).
 
 ### Fase 5: Frontend - Wishlist Pública y Panel de Autor
-- [ ] Construir estructura principal en `frontend/index.html` (barra de navegación, panel de wishlists propias, contenedor de tarjetas, formulario/modal de artículo).
-- [ ] Implementar renderizado seguro de tarjetas (`textContent`, fallback de imágenes) en `frontend/js/app.js`.
-- [ ] Implementar detección de modo Visitante vs. modo Autor (mostrar/ocultar controles de creación, edición y borrado según usuario logueado).
-- [ ] Implementar botón "Compartir Wishlist" (copiar la URL pública `?list=<share_id>` al portapapeles).
+- [x] Construir estructura principal en `frontend/index.html` y `frontend/wishlist.html` (barra de navegación, panel de wishlists propias, contenedor de tarjetas, formulario/modal de artículo).
+- [x] Implementar renderizado seguro de tarjetas (`textContent`, fallback de imágenes) en `frontend/js/app.js`.
+- [x] Implementar detección de modo Visitante vs. modo Autor (mostrar/ocultar controles de creación, edición y borrado según usuario logueado).
+- [x] Implementar botón "Compartir Wishlist" (copiar la URL pública `?list=<share_id>` al portapapeles).
 
 ### Fase 6: Pruebas y Pulido Final
 - [ ] Verificar casos borde (URLs inválidas, intento de borrar ítem ajeno -> `403`, usuario no encontrado -> `404`, imágenes rotas).

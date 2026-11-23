@@ -62,6 +62,10 @@ class Wishlist(Base):
         nullable=False,
     )
 
+    @property
+    def item_count(self) -> int:
+        return len(self.items)
+
     owner: Mapped[User] = relationship(back_populates="wishlists")
     items: Mapped[list["WishlistItem"]] = relationship(
         back_populates="wishlist",

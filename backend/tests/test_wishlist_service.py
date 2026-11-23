@@ -66,6 +66,18 @@ class TestListOwnWishlists:
         wishlists = wishlist_service.list_own_wishlists(session, alex)
 
         assert [wishlist.title for wishlist in wishlists] == ["Reciente", "Antigua"]
+        assert [wishlist.item_count for wishlist in wishlists] == [0, 0]
+
+    def test_includes_item_count(self, session: Session) -> None:
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex, "Con artículos")
+        _add_item(session, wishlist, "Uno")
+        _add_item(session, wishlist, "Dos")
+
+        wishlists = wishlist_service.list_own_wishlists(session, alex)
+
+        assert len(wishlists) == 1
+        assert wishlists[0].item_count == 2
 
 
 class TestCreateWishlist:

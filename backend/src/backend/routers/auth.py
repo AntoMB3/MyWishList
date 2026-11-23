@@ -90,8 +90,6 @@ def login(
     credentials: Annotated[UserLogin, Depends(login_credentials)],
     db: Annotated[Session, Depends(get_db)],
 ) -> TokenResponse:
-
-    print(credentials)
     return auth_service.authenticate_user(
         db,
         username=credentials.username,

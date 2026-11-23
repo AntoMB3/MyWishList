@@ -50,6 +50,7 @@ def list_own_wishlists(db: Session, current_user: User) -> list[Wishlist]:
     """Devuelve todas las wishlists del usuario autenticado."""
     statement = (
         select(Wishlist)
+        .options(selectinload(Wishlist.items))
         .where(Wishlist.user_id == current_user.id)
         .order_by(Wishlist.created_at.desc(), Wishlist.id.desc())
     )

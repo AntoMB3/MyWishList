@@ -169,6 +169,7 @@ class WishlistResponse(BaseModel):
     title: str
     description: str | None
     share_id: str
+    item_count: int = 0
     created_at: datetime
 
 

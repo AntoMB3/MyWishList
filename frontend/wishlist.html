@@ -12,7 +12,7 @@
 
   <header class="navbar">
     <div class="container navbar__inner">
-      <a class="brand" href="index.html">
+      <a class="brand" href="/">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8Z"/>
@@ -22,18 +22,18 @@
       </a>
 
       <nav class="navbar__actions" aria-label="Cuenta">
-        <a class="btn btn--ghost btn--sm" href="index.html" aria-label="Volver a mis listas">
+        <a class="btn btn--ghost btn--sm" href="/" aria-label="Volver a mis listas">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M19 12H5M11 18l-6-6 6-6"/>
           </svg>
           <span>Mis listas</span>
         </a>
         <span class="navbar__divider" aria-hidden="true"></span>
-        <div class="user-chip">
-          <span class="user-chip__avatar" aria-hidden="true">AD</span>
+        <div class="user-chip" hidden>
+          <span class="user-chip__avatar" aria-hidden="true"></span>
           <span class="user-chip__meta">
-            <span class="user-chip__name">alex_demo</span>
-            <span class="user-chip__role">Autor de la lista</span>
+            <span class="user-chip__name"></span>
+            <span class="user-chip__role"></span>
           </span>
         </div>
         <a class="btn btn--ghost btn--sm" href="login.html" aria-label="Cerrar sesión">
@@ -50,14 +50,14 @@
   <main class="container page">
 
     <nav class="breadcrumb" aria-label="Ruta de navegación">
-      <a href="index.html">
+      <a href="/">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" aria-hidden="true">
           <path d="M19 12H5M11 18l-6-6 6-6"/>
         </svg>
         Mis wishlists
       </a>
       <span aria-hidden="true">/</span>
-      <span>Setup Home Office 2026</span>
+      <span>Cargando…</span>
     </nav>
 
     <section class="list-head">
@@ -68,26 +68,23 @@
           </svg>
           Lista de deseos
         </span>
-        <h1 class="list-head__title">Setup Home Office 2026</h1>
-        <p class="list-head__desc">Todo lo que necesito para montar mi escritorio definitivo: audio, periféricos y ergonomía.</p>
+        <h1 class="list-head__title">Cargando wishlist…</h1>
+        <p class="list-head__desc"></p>
         <div class="list-head__meta">
-          <span class="owner-inline">
-            <span class="user-chip__avatar" aria-hidden="true">AD</span>
-            Por @alex_demo
-          </span>
+          <span class="owner-inline"></span>
           <span class="meta-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
               <path d="m3.3 7 8.7 5 8.7-5M12 22V12"/>
             </svg>
-            6 artículos
+            0 artículos
           </span>
           <span class="meta-item">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <rect x="3" y="4" width="18" height="18" rx="2"/>
               <path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
-            Creada el 12 nov 2026
+            —
           </span>
         </div>
       </div>
@@ -171,245 +168,7 @@
       </p>
     </section>
 
-    <section class="item-grid" id="item-grid" aria-label="Artículos de la wishlist">
-
-      <!-- Artículo 1 -->
-      <article class="item-card"
-               data-title="Auriculares Sony WH-1000XM5"
-               data-description="Cancelación de ruido líder y 30 horas de batería. Color negro."
-               data-price="379.00"
-               data-url="https://www.sony.com/electronics/headband-headphones/wh-1000xm5"
-               data-image="assets/headphones.svg">
-        <div class="item-card__media">
-          <img class="item-card__img" src="assets/headphones.svg" alt="Auriculares Sony WH-1000XM5" loading="lazy"
-               onerror="this.onerror=null;this.src='assets/placeholder.svg'">
-          <span class="price-tag">$379.00</span>
-        </div>
-        <div class="item-card__body">
-          <h2 class="item-card__title">Auriculares Sony WH-1000XM5</h2>
-          <p class="item-card__desc">Cancelación de ruido líder y 30 horas de batería. Color negro.</p>
-        </div>
-        <div class="item-card__footer">
-          <a class="btn btn--ghost btn--sm" href="https://www.sony.com/electronics/headband-headphones/wh-1000xm5"
-             target="_blank" rel="noopener noreferrer">
-            Ver en tienda
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M7 17 17 7M7 7h10v10"/>
-            </svg>
-          </a>
-          <div class="item-card__tools" data-owner-only>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-item" title="Editar artículo" aria-label="Editar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-item" title="Eliminar artículo" aria-label="Eliminar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Artículo 2 -->
-      <article class="item-card"
-               data-title="Teclado Mecánico Keychron K2"
-               data-description="Formato 75 %, switches marrones y conexión inalámbrica."
-               data-price="99.00"
-               data-url="https://www.keychron.com/products/keychron-k2-wireless-mechanical-keyboard"
-               data-image="assets/keyboard.svg">
-        <div class="item-card__media">
-          <img class="item-card__img" src="assets/keyboard.svg" alt="Teclado Mecánico Keychron K2" loading="lazy"
-               onerror="this.onerror=null;this.src='assets/placeholder.svg'">
-          <span class="price-tag">$99.00</span>
-        </div>
-        <div class="item-card__body">
-          <h2 class="item-card__title">Teclado Mecánico Keychron K2</h2>
-          <p class="item-card__desc">Formato 75 %, switches marrones y conexión inalámbrica.</p>
-        </div>
-        <div class="item-card__footer">
-          <a class="btn btn--ghost btn--sm" href="https://www.keychron.com/products/keychron-k2-wireless-mechanical-keyboard"
-             target="_blank" rel="noopener noreferrer">
-            Ver en tienda
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M7 17 17 7M7 7h10v10"/>
-            </svg>
-          </a>
-          <div class="item-card__tools" data-owner-only>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-item" title="Editar artículo" aria-label="Editar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-item" title="Eliminar artículo" aria-label="Eliminar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Artículo 3 -->
-      <article class="item-card"
-               data-title="Lámpara de Escritorio LED"
-               data-description="Luz cálida regulable, brazo articulado y base de madera."
-               data-price="45.50"
-               data-url="https://www.ikea.com/"
-               data-image="assets/lamp.svg">
-        <div class="item-card__media">
-          <img class="item-card__img" src="assets/lamp.svg" alt="Lámpara de Escritorio LED" loading="lazy"
-               onerror="this.onerror=null;this.src='assets/placeholder.svg'">
-          <span class="price-tag">$45.50</span>
-        </div>
-        <div class="item-card__body">
-          <h2 class="item-card__title">Lámpara de Escritorio LED</h2>
-          <p class="item-card__desc">Luz cálida regulable, brazo articulado y base de madera.</p>
-        </div>
-        <div class="item-card__footer">
-          <a class="btn btn--ghost btn--sm" href="https://www.ikea.com/" target="_blank" rel="noopener noreferrer">
-            Ver en tienda
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M7 17 17 7M7 7h10v10"/>
-            </svg>
-          </a>
-          <div class="item-card__tools" data-owner-only>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-item" title="Editar artículo" aria-label="Editar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-item" title="Eliminar artículo" aria-label="Eliminar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Artículo 4 -->
-      <article class="item-card"
-               data-title="Monitor Dell UltraSharp 27”"
-               data-description="4K IPS, 99 % sRGB y hub USB-C con carga de 90 W."
-               data-price="549.00"
-               data-url="https://www.dell.com/"
-               data-image="assets/monitor.svg">
-        <div class="item-card__media">
-          <img class="item-card__img" src="assets/monitor.svg" alt="Monitor Dell UltraSharp de 27 pulgadas" loading="lazy"
-               onerror="this.onerror=null;this.src='assets/placeholder.svg'">
-          <span class="price-tag">$549.00</span>
-        </div>
-        <div class="item-card__body">
-          <h2 class="item-card__title">Monitor Dell UltraSharp 27”</h2>
-          <p class="item-card__desc">4K IPS, 99 % sRGB y hub USB-C con carga de 90 W.</p>
-        </div>
-        <div class="item-card__footer">
-          <a class="btn btn--ghost btn--sm" href="https://www.dell.com/" target="_blank" rel="noopener noreferrer">
-            Ver en tienda
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M7 17 17 7M7 7h10v10"/>
-            </svg>
-          </a>
-          <div class="item-card__tools" data-owner-only>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-item" title="Editar artículo" aria-label="Editar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-item" title="Eliminar artículo" aria-label="Eliminar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Artículo 5 -->
-      <article class="item-card"
-               data-title="Silla Ergonómica Aeron"
-               data-description="Talla B, malla transpirable y soporte lumbar ajustable."
-               data-price="1295.00"
-               data-url="https://www.hermanmiller.com/"
-               data-image="assets/chair.svg">
-        <div class="item-card__media">
-          <img class="item-card__img" src="assets/chair.svg" alt="Silla Ergonómica Aeron" loading="lazy"
-               onerror="this.onerror=null;this.src='assets/placeholder.svg'">
-          <span class="price-tag">$1,295.00</span>
-        </div>
-        <div class="item-card__body">
-          <h2 class="item-card__title">Silla Ergonómica Aeron</h2>
-          <p class="item-card__desc">Talla B, malla transpirable y soporte lumbar ajustable.</p>
-        </div>
-        <div class="item-card__footer">
-          <a class="btn btn--ghost btn--sm" href="https://www.hermanmiller.com/" target="_blank" rel="noopener noreferrer">
-            Ver en tienda
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M7 17 17 7M7 7h10v10"/>
-            </svg>
-          </a>
-          <div class="item-card__tools" data-owner-only>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-item" title="Editar artículo" aria-label="Editar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-item" title="Eliminar artículo" aria-label="Eliminar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-      <!-- Artículo 6 -->
-      <article class="item-card"
-               data-title="Cuaderno de Notas A5"
-               data-description="Tapa dura, papel punteado de 120 g y cierre elástico."
-               data-price="18.90"
-               data-url="https://www.moleskine.com/"
-               data-image="assets/notebook.svg">
-        <div class="item-card__media">
-          <img class="item-card__img" src="assets/notebook.svg" alt="Cuaderno de Notas A5" loading="lazy"
-               onerror="this.onerror=null;this.src='assets/placeholder.svg'">
-          <span class="price-tag">$18.90</span>
-        </div>
-        <div class="item-card__body">
-          <h2 class="item-card__title">Cuaderno de Notas A5</h2>
-          <p class="item-card__desc">Tapa dura, papel punteado de 120 g y cierre elástico.</p>
-        </div>
-        <div class="item-card__footer">
-          <a class="btn btn--ghost btn--sm" href="https://www.moleskine.com/" target="_blank" rel="noopener noreferrer">
-            Ver en tienda
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M7 17 17 7M7 7h10v10"/>
-            </svg>
-          </a>
-          <div class="item-card__tools" data-owner-only>
-            <button class="btn btn--ghost btn--icon" type="button" data-action="edit-item" title="Editar artículo" aria-label="Editar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-              </svg>
-            </button>
-            <button class="btn btn--ghost btn--icon is-danger" type="button" data-action="delete-item" title="Eliminar artículo" aria-label="Eliminar artículo">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                <path d="M10 11v6M14 11v6"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </article>
-
-    </section>
+    <section class="item-grid" id="item-grid" aria-label="Artículos de la wishlist"></section>
 
     <div class="empty-state" id="item-empty" hidden>
       <span class="empty-state__icon" aria-hidden="true">
@@ -423,8 +182,8 @@
     </div>
 
     <footer class="page-foot">
-      <span><strong>MyWishList</strong> · Fase 1 de diseño con datos de ejemplo.</span>
-      <span>Los cambios no se guardan todavía. La conexión con la API llega en la fase 2.</span>
+      <span><strong>MyWishList</strong> · Guarda, organiza y comparte tus listas de deseos.</span>
+      <span>Comparte esta lista mediante su enlace único.</span>
     </footer>
 
   </main>
@@ -527,6 +286,6 @@
     </div>
   </dialog>
 
-  <script defer src="js/ui-mock.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
