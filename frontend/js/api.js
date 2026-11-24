@@ -169,6 +169,32 @@ export async function getCurrentUser() {
   return apiFetch("/api/auth/me");
 }
 
+function isUsingPersistentStorage() {
+  try {
+    return window.localStorage.getItem(TOKEN_STORAGE_KEY) !== null;
+  } catch {
+    return false;
+  }
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+  const remember = isUsingPersistentStorage();
+  const data = await apiFetch("/api/auth/change-password", {
+    method: "POST",
+    body: {
+      current_password: currentPassword,
+      new_password: newPassword,
+    },
+  });
+
+  // El backend invalida los tokens anteriores y devuelve uno nuevo para esta
+  // sesión; se guarda en el mismo almacenamiento que el token anterior.
+  if (data?.access_token) {
+    setToken(data.access_token, remember);
+  }
+  return data;
+}
+
 /* --------------------------------------------------------------------------
    Configuración pública (/api/config)
    -------------------------------------------------------------------------- */

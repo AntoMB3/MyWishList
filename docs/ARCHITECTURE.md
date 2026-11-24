@@ -47,6 +47,7 @@ MyWhishList/
 │   ├── models.py            # Modelos ORM de Base de Datos (User, Wishlist, WishlistItem)
 │   ├── schemas.py           # Esquemas Pydantic (DTOs de entrada y salida)
 │   ├── security.py          # Hashing de contraseñas y firma/validación de JWT
+│   ├── cli.py               # Comando administrativo `reset-password` (recuperación de cuentas)
 │   ├── services/            # Capa de lógica de negocio y acceso a datos
 │   │   ├── __init__.py
 │   │   ├── auth_service.py      # Creación y verificación de usuarios
@@ -105,6 +106,7 @@ MyWhishList/
 | `id` | `INTEGER` | `PRIMARY KEY, AUTOINCREMENT` | Identificador único |
 | `username` | `VARCHAR(30)` | `UNIQUE, NOT NULL, INDEX` | Nombre de usuario normalizado para URL |
 | `hashed_password` | `VARCHAR(255)` | `NOT NULL` | Hash bcrypt/argon2 de la contraseña |
+| `token_version` | `INTEGER` | `NOT NULL, DEFAULT 0` | Versión de credenciales; se incrementa al cambiar la contraseña |
 | `created_at` | `DATETIME` | `DEFAULT CURRENT_TIMESTAMP` | Fecha de registro |
 
 ### Tabla: `wishlists`
@@ -175,6 +177,7 @@ MyWhishList/
 | `POST` | `/api/auth/register` | Público | Registra un nuevo usuario | `201`, `400`, `422` |
 | `POST` | `/api/auth/login` | Público | Autentica y devuelve Token JWT | `200`, `401`, `422` |
 | `GET` | `/api/auth/me` | **Protegido** | Devuelve datos del usuario logueado | `200`, `401` |
+| `POST` | `/api/auth/change-password` | **Protegido** | Cambia la contraseña y devuelve un token nuevo | `200`, `400`, `401`, `422` |
 | `GET` | `/api/config` | Público | Límites públicos usados por el frontend | `200` |
 | `GET` | `/api/wishlists/mine` | **Protegido** | Lista las wishlists del usuario actual | `200`, `401` |
 | `POST` | `/api/wishlists` | **Protegido** | Crea una wishlist propia | `201`, `401`, `409`, `422` |
@@ -211,6 +214,26 @@ MyWhishList/
    - Contraseñas hasheadas con **Argon2** mediante `pwdlib` (nunca texto plano).
    - Secretos (`SECRET_KEY`) cargados desde `.env`, nunca expuestos en el código fuente. Debe tener al menos 32 caracteres; existe un valor de desarrollo por defecto que no debe usarse en producción.
    - Tokens JWT firmados con HS256 y tiempo de expiración definido (`exp`, 24 horas por defecto vía `ACCESS_TOKEN_EXPIRE_MINUTES`). El `sub` contiene el id del usuario.
+   - **Recuperación de contraseña sin correo ni verificación de usuario:** al no
+     recoger datos de contacto, la recuperación es asistida por el administrador.
+     El comando `uv run reset-password <usuario>` (o
+     `docker exec -it <contenedor> uv run --no-sync reset-password <usuario>`)
+     genera una contraseña temporal aleatoria, actualiza su hash Argon2 y la
+     imprime en la terminal. El administrador se la comunica al usuario por un
+     canal de confianza y este la cambia desde el modal *Cambiar contraseña*
+     (opción del menú que se abre al pulsar su nombre o avatar; `POST
+     /api/auth/change-password`), que exige la contraseña actual. La
+     contraseña temporal nunca se almacena en texto plano ni se envía por la API.
+   - El cambio de contraseña exige la contraseña actual (mitiga el uso de un
+     token robado) y rechaza que la nueva sea idéntica a la anterior.
+   - **Invalidación de sesiones:** el JWT incluye el claim `ver` con el
+     `users.token_version` del usuario. Al cambiar la contraseña (desde la
+     aplicación o con `reset-password`) se incrementa esa versión, de modo que
+     todos los tokens emitidos antes dejan de ser válidos de inmediato
+     (`401`), incluidas otras sesiones abiertas. La petición de cambio
+     devuelve un token nuevo para que la sesión que realizó el cambio siga
+     activa. `get_current_user` compara `ver` con la versión almacenada en cada
+     petición autenticada.
 4. **Normalización de `username`:**
    - Validación por expresión regular `^[a-zA-Z0-9_-]{3,30}$` y conversión a minúsculas para normalizar el identificador de cuenta.
 5. **Manejo de Imágenes Rotos (Broken Links) y Precios:**
@@ -262,6 +285,7 @@ MyWhishList/
 - [x] Implementar dependencia `get_current_user` en `backend/dependencies.py`.
 - [x] Crear servicio `backend/services/auth_service.py`.
 - [x] Crear endpoints `/api/auth/register`, `/api/auth/login` y `/api/auth/me` en `backend/routers/auth.py`.
+- [x] Recuperación asistida por administrador (`backend/cli.py`) y cambio de contraseña autenticado (`POST /api/auth/change-password`).
 
 ### Fase 3: Lógica de Wishlists e Items (Backend)
 - [x] Crear servicio `backend/services/wishlist_service.py` (CRUD, `share_id` y validación de dueño).

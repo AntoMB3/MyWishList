@@ -9,12 +9,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend import main
-from backend.database import create_db_engine
+from backend.database import create_db_engine, migrate_users_token_version
 from backend.models import User, Wishlist, WishlistItem
 
 EXPECTED_TABLES = {"users", "wishlists", "wishlist_items"}
 EXPECTED_COLUMNS = {
-    "users": {"id", "username", "hashed_password", "created_at"},
+    "users": {"id", "username", "hashed_password", "token_version", "created_at"},
     "wishlists": {
         "id",
         "title",
@@ -82,6 +82,50 @@ def test_lifespan_creates_database_and_tables(
     assert database_path.exists()
     assert set(inspect(lifespan_engine).get_table_names()) == EXPECTED_TABLES
     lifespan_engine.dispose()
+
+
+def test_users_default_to_token_version_zero(session: Session) -> None:
+    user = User(username="alex", hashed_password="hash")
+    session.add(user)
+    session.commit()
+
+    assert user.token_version == 0
+
+
+def test_migrate_users_token_version_adds_column(tmp_path: Path) -> None:
+    legacy_engine = create_db_engine(f"sqlite:///{tmp_path / 'legacy.db'}")
+    with legacy_engine.begin() as connection:
+        connection.exec_driver_sql(
+            "CREATE TABLE users ("
+            "id INTEGER PRIMARY KEY, "
+            "username VARCHAR(30) UNIQUE NOT NULL, "
+            "hashed_password VARCHAR(255) NOT NULL, "
+            "created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP)"
+        )
+        connection.exec_driver_sql(
+            "INSERT INTO users (username, hashed_password) VALUES ('alex', 'hash')"
+        )
+
+    migrate_users_token_version(legacy_engine)
+    migrate_users_token_version(legacy_engine)  # idempotente
+
+    columns = {column["name"] for column in inspect(legacy_engine).get_columns("users")}
+    assert "token_version" in columns
+    with legacy_engine.connect() as connection:
+        value = connection.exec_driver_sql(
+            "SELECT token_version FROM users WHERE username = 'alex'"
+        ).scalar_one()
+    assert value == 0
+    legacy_engine.dispose()
+
+
+def test_migrate_users_token_version_ignores_missing_table(tmp_path: Path) -> None:
+    empty_engine = create_db_engine(f"sqlite:///{tmp_path / 'empty.db'}")
+
+    migrate_users_token_version(empty_engine)
+
+    assert inspect(empty_engine).get_table_names() == []
+    empty_engine.dispose()
 
 
 def test_wishlist_gets_unique_share_id(session: Session) -> None:

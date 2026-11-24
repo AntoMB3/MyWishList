@@ -69,6 +69,16 @@ class UserLogin(UserBase):
     password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)
 
 
+class PasswordChange(BaseModel):
+    """Payload de `POST /api/auth/change-password`."""
+
+    current_password: str = Field(min_length=1, max_length=PASSWORD_MAX_LENGTH)
+    new_password: str = Field(
+        min_length=PASSWORD_MIN_LENGTH,
+        max_length=PASSWORD_MAX_LENGTH,
+    )
+
+
 class UserResponse(BaseModel):
     """Representación pública de un usuario (sin `hashed_password`)."""
 

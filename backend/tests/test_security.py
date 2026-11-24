@@ -44,6 +44,10 @@ class TestJwt:
         assert "exp" in payload
         assert "iat" in payload
 
+    def test_token_includes_credentials_version(self) -> None:
+        assert decode_access_token(create_access_token(42))["ver"] == 0
+        assert decode_access_token(create_access_token(42, token_version=3))["ver"] == 3
+
     def test_subject_is_stored_as_string(self) -> None:
         assert decode_access_token(create_access_token(7))["sub"] == "7"
 
@@ -120,6 +124,34 @@ class TestGetCurrentUser:
         response = client.get(
             "/api/auth/me",
             headers={"Authorization": f"Bearer {expired}"},
+        )
+        assert response.status_code == 401
+
+    def test_token_with_matching_version_is_accepted(
+        self,
+        client: TestClient,
+        user: User,
+    ) -> None:
+        token = create_access_token(user.id, token_version=user.token_version)
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert response.status_code == 200
+
+    def test_token_with_outdated_version_is_rejected(
+        self,
+        client: TestClient,
+        session: Session,
+        user: User,
+    ) -> None:
+        stale_token = create_access_token(user.id, token_version=user.token_version)
+        user.token_version += 1
+        session.commit()
+
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {stale_token}"},
         )
         assert response.status_code == 401
 

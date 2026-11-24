@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend import models  # noqa: F401  (registra las tablas en Base.metadata)
 from backend.config import BASE_DIR
-from backend.database import Base, engine, migrate_image_url_nullable
+from backend.database import Base, engine, migrate_image_url_nullable, migrate_users_token_version
 from backend.routers import auth, config, items, media, wishlists
 
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
@@ -15,6 +15,7 @@ FRONTEND_DIR = BASE_DIR.parent / "frontend"
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None]:
     Base.metadata.create_all(bind=engine)
+    migrate_users_token_version(engine)
     migrate_image_url_nullable(engine)
     yield
 

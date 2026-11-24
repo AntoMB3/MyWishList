@@ -28,15 +28,26 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(
     subject: int | str,
     expires_delta: timedelta | None = None,
+    token_version: int = 0,
 ) -> str:
-    """Firma un JWT con el `sub` indicado (normalmente el id del usuario)."""
+    """Firma un JWT con el `sub` indicado (normalmente el id del usuario).
+
+    `ver` guarda la versión de credenciales del usuario: al cambiar la
+    contraseña se incrementa en la base de datos y todos los tokens emitidos
+    antes dejan de ser válidos.
+    """
     now = datetime.now(UTC)
     expires_at = now + (
         expires_delta
         if expires_delta is not None
         else timedelta(minutes=settings.access_token_expire_minutes)
     )
-    payload = {"sub": str(subject), "iat": now, "exp": expires_at}
+    payload = {
+        "sub": str(subject),
+        "ver": token_version,
+        "iat": now,
+        "exp": expires_at,
+    }
     return jwt.encode(
         payload,
         settings.secret_key.get_secret_value(),

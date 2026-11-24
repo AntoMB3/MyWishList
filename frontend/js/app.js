@@ -24,6 +24,8 @@ import {
   fetchAuthenticatedUser,
   getInitials,
   initLoginPage,
+  initPasswordModal,
+  initUserMenu,
   logout,
   updateNavbarUser,
 } from "./auth.js";
@@ -1296,6 +1298,8 @@ async function initWishlistDetailPage() {
 
 function init() {
   initDialogs();
+  initPasswordModal({ showToast });
+  initUserMenu();
 
   switch (document.body.dataset.page) {
     case "login":

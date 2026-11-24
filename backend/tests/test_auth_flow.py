@@ -212,3 +212,179 @@ class TestAuthenticatedFlow:
 
         assert me.status_code == 200
         assert me.json()["username"] == "alex"
+
+
+class TestChangePassword:
+    NEW_PASSWORD = "nuevaClave456"
+
+    def test_requires_authentication(self, client: TestClient) -> None:
+        response = client.post(
+            "/api/auth/change-password",
+            json={
+                "current_password": PASSWORD,
+                "new_password": self.NEW_PASSWORD,
+            },
+        )
+
+        assert response.status_code == 401
+
+    def test_changes_password_and_allows_login_with_new_one(
+        self,
+        client: TestClient,
+    ) -> None:
+        _register(client)
+        token = _login(client)
+
+        response = client.post(
+            "/api/auth/change-password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "current_password": PASSWORD,
+                "new_password": self.NEW_PASSWORD,
+            },
+        )
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["token_type"] == "bearer"
+        assert decode_access_token(body["access_token"])["ver"] == 1
+
+        assert _login(client, password=self.NEW_PASSWORD)
+
+        old_password = client.post(
+            "/api/auth/login",
+            json={"username": "alex", "password": PASSWORD},
+        )
+        assert old_password.status_code == 401
+
+    def test_previous_token_stops_being_valid(
+        self,
+        client: TestClient,
+    ) -> None:
+        _register(client)
+        old_token = _login(client)
+
+        response = client.post(
+            "/api/auth/change-password",
+            headers={"Authorization": f"Bearer {old_token}"},
+            json={
+                "current_password": PASSWORD,
+                "new_password": self.NEW_PASSWORD,
+            },
+        )
+        new_token = response.json()["access_token"]
+
+        stale = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {old_token}"},
+        )
+        fresh = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {new_token}"},
+        )
+
+        assert stale.status_code == 401
+        assert fresh.status_code == 200
+
+    def test_other_sessions_are_invalidated(
+        self,
+        client: TestClient,
+    ) -> None:
+        _register(client)
+        first_token = _login(client)
+        second_token = _login(client)
+
+        client.post(
+            "/api/auth/change-password",
+            headers={"Authorization": f"Bearer {first_token}"},
+            json={
+                "current_password": PASSWORD,
+                "new_password": self.NEW_PASSWORD,
+            },
+        )
+
+        for token in (first_token, second_token):
+            response = client.get(
+                "/api/auth/me",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert response.status_code == 401
+
+    def test_wrong_current_password_returns_400(
+        self,
+        client: TestClient,
+    ) -> None:
+        _register(client)
+        token = _login(client)
+
+        response = client.post(
+            "/api/auth/change-password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "current_password": "incorrecta",
+                "new_password": self.NEW_PASSWORD,
+            },
+        )
+
+        assert response.status_code == 400
+        assert "actual" in response.json()["detail"]
+        assert _login(client, password=PASSWORD)
+
+    def test_wrong_current_password_keeps_session_alive(
+        self,
+        client: TestClient,
+    ) -> None:
+        _register(client)
+        token = _login(client)
+
+        client.post(
+            "/api/auth/change-password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "current_password": "incorrecta",
+                "new_password": self.NEW_PASSWORD,
+            },
+        )
+
+        me = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        assert me.status_code == 200
+
+    def test_same_password_is_rejected(
+        self,
+        client: TestClient,
+    ) -> None:
+        _register(client)
+        token = _login(client)
+
+        response = client.post(
+            "/api/auth/change-password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "current_password": PASSWORD,
+                "new_password": PASSWORD,
+            },
+        )
+
+        assert response.status_code == 400
+        assert "diferente" in response.json()["detail"]
+
+    def test_short_new_password_returns_422(
+        self,
+        client: TestClient,
+    ) -> None:
+        _register(client)
+        token = _login(client)
+
+        response = client.post(
+            "/api/auth/change-password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "current_password": PASSWORD,
+                "new_password": "corta",
+            },
+        )
+
+        assert response.status_code == 422

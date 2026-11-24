@@ -31,15 +31,21 @@ def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Annotated[Session, Depends(get_db)],
 ) -> User:
-    """Resuelve el usuario autenticado a partir del Bearer token."""
+    """Resuelve el usuario autenticado a partir del Bearer token.
+
+    Además de la firma y la expiración, se comprueba la versión de
+    credenciales (`ver`): si el usuario cambió su contraseña después de que se
+    emitiera el token, la petición se rechaza.
+    """
     try:
         payload = decode_access_token(token)
         subject = payload["sub"]
         user_id = int(subject)
+        token_version = int(payload.get("ver", 0))
     except (jwt.InvalidTokenError, KeyError, TypeError, ValueError):
         raise CREDENTIALS_EXCEPTION from None
 
     user = db.get(User, user_id)
-    if user is None:
+    if user is None or user.token_version != token_version:
         raise CREDENTIALS_EXCEPTION
     return user

@@ -6,6 +6,7 @@
    ========================================================================== */
 
 import {
+  changePassword,
   clearToken,
   getCurrentUser,
   getToken,
@@ -63,10 +64,18 @@ export function updateNavbarUser(user, roleText = "") {
   const roleEl = $(".navbar .user-chip__role");
   const logoutBtn = $('.navbar [aria-label="Cerrar sesión"], .navbar [data-action="logout"]');
   const divider = $(".navbar .navbar__divider");
+  const authOnly = $$(".navbar [data-auth-only]");
 
   if (!user) {
     if (chip) chip.hidden = true;
     if (divider) divider.hidden = true;
+    authOnly.forEach((el) => {
+      el.hidden = true;
+    });
+    const menu = $(".navbar #user-menu");
+    if (menu) menu.hidden = true;
+    const trigger = $(".navbar #user-menu-trigger");
+    trigger?.setAttribute("aria-expanded", "false");
     if (logoutBtn) {
       logoutBtn.setAttribute("href", "login.html");
       logoutBtn.setAttribute("aria-label", "Iniciar sesión");
@@ -78,9 +87,184 @@ export function updateNavbarUser(user, roleText = "") {
 
   if (chip) chip.hidden = false;
   if (divider) divider.hidden = false;
+  authOnly.forEach((el) => {
+    el.hidden = false;
+  });
   if (avatar) avatar.textContent = getInitials(user.username);
   if (nameEl) nameEl.textContent = user.username;
   if (roleEl && roleText) roleEl.textContent = roleText;
+}
+
+/* --------------------------------------------------------------------------
+   Mostrar/ocultar contraseñas (login y modal de cambio)
+   -------------------------------------------------------------------------- */
+
+function bindPasswordToggles(scope = document) {
+  $$("[data-toggle-password]", scope).forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.dataset.bound = "true";
+
+    button.addEventListener("click", () => {
+      const input = document.getElementById(button.dataset.togglePassword);
+      if (!input) return;
+
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      button.setAttribute("aria-pressed", String(isHidden));
+      button.setAttribute(
+        "aria-label",
+        isHidden ? "Ocultar contraseña" : "Mostrar contraseña"
+      );
+      input.focus();
+    });
+  });
+}
+
+/* --------------------------------------------------------------------------
+   Menú de cuenta (chip del usuario en la navbar)
+   -------------------------------------------------------------------------- */
+
+export function initUserMenu() {
+  const trigger = $("#user-menu-trigger");
+  const menu = $("#user-menu");
+  if (!trigger || !menu) return;
+
+  function setOpen(open) {
+    menu.hidden = !open;
+    trigger.setAttribute("aria-expanded", String(open));
+    if (open) {
+      const firstItem = $(".user-menu__item", menu);
+      firstItem?.focus();
+    }
+  }
+
+  function close({ restoreFocus = false } = {}) {
+    if (menu.hidden) return;
+    setOpen(false);
+    if (restoreFocus) trigger.focus();
+  }
+
+  trigger.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setOpen(menu.hidden);
+  });
+
+  trigger.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
+      if (menu.hidden) {
+        event.preventDefault();
+        setOpen(true);
+      }
+    } else if (event.key === "Escape") {
+      close({ restoreFocus: true });
+    }
+  });
+
+  menu.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close({ restoreFocus: true });
+    }
+  });
+
+  // Al elegir una acción del menú se cierra y deja paso al modal/botón.
+  menu.addEventListener("click", (event) => {
+    if (event.target.closest(".user-menu__item")) close();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (menu.hidden) return;
+    if (menu.contains(event.target) || trigger.contains(event.target)) return;
+    close();
+  });
+
+  // Cerrar también cuando el foco sale del menú (navegación con Tab).
+  document.addEventListener("focusin", (event) => {
+    if (menu.hidden) return;
+    if (menu.contains(event.target) || trigger.contains(event.target)) return;
+    close();
+  });
+}
+
+/* --------------------------------------------------------------------------
+   Modal: cambiar contraseña (index.html y wishlist.html)
+   -------------------------------------------------------------------------- */
+
+export function initPasswordModal({ showToast } = {}) {
+  const modal = $("#password-modal");
+  const form = $("#password-form");
+  if (!modal || !form) return;
+
+  const currentInput = $("#password-current");
+  const newInput = $("#password-new");
+  const confirmInput = $("#password-confirm");
+  const submitBtn = $('button[type="submit"]', form);
+
+  bindPasswordToggles(modal);
+
+  function validateConfirmation() {
+    if (!newInput || !confirmInput) return;
+    const mismatch = newInput.value !== confirmInput.value;
+    confirmInput.setCustomValidity(
+      mismatch ? "Las contraseñas no coinciden." : ""
+    );
+  }
+
+  function resetForm() {
+    form.reset();
+    if (confirmInput) confirmInput.setCustomValidity("");
+  }
+
+  newInput?.addEventListener("input", validateConfirmation);
+  confirmInput?.addEventListener("input", validateConfirmation);
+
+  $$('[data-modal-open="password-modal"]').forEach((button) => {
+    button.addEventListener("click", () => {
+      resetForm();
+      if (typeof modal.showModal === "function") {
+        if (!modal.open) modal.showModal();
+      } else {
+        modal.setAttribute("open", "");
+      }
+      requestAnimationFrame(() => currentInput?.focus());
+    });
+  });
+
+  modal.addEventListener("close", resetForm);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    validateConfirmation();
+    if (!form.reportValidity()) return;
+
+    const currentPassword = currentInput?.value ?? "";
+    const newPassword = newInput?.value ?? "";
+
+    if (newPassword === currentPassword) {
+      showToast("La nueva contraseña debe ser diferente de la actual.");
+      return;
+    }
+
+    if (submitBtn) submitBtn.disabled = true;
+    try {
+      await changePassword({ currentPassword, newPassword });
+      if (typeof modal.close === "function") {
+        modal.close();
+      } else {
+        modal.removeAttribute("open");
+      }
+      resetForm();
+      showToast("Contraseña actualizada. Se cerraron las demás sesiones.");
+    } catch (error) {
+      if (error?.status === 401) {
+        logout("login.html");
+        return;
+      }
+      showToast(error?.message || "No se pudo actualizar la contraseña.");
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+    }
+  });
 }
 
 /* --------------------------------------------------------------------------
@@ -166,21 +350,7 @@ export async function initLoginPage({ showToast }) {
     button.addEventListener("click", () => setTab(button.dataset.authTab));
   });
 
-  $$("[data-toggle-password]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const input = document.getElementById(button.dataset.togglePassword);
-      if (!input) return;
-
-      const isHidden = input.type === "password";
-      input.type = isHidden ? "text" : "password";
-      button.setAttribute("aria-pressed", String(isHidden));
-      button.setAttribute(
-        "aria-label",
-        isHidden ? "Ocultar contraseña" : "Mostrar contraseña"
-      );
-      input.focus();
-    });
-  });
+  bindPasswordToggles();
 
   const loginForm = $("#login-form");
   loginForm?.addEventListener("submit", async (event) => {
@@ -246,6 +416,8 @@ export async function initLoginPage({ showToast }) {
   });
 
   $('[data-action="forgot-password"]')?.addEventListener("click", () => {
-    showToast("Contacta con el administrador para restablecer tu contraseña.");
+    showToast(
+      "Pide al administrador una contraseña temporal y cámbiala al entrar en la aplicación."
+    );
   });
 }

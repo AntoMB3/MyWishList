@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session
 
 from backend.dependencies import get_current_user, get_db
 from backend.models import User
-from backend.schemas import TokenResponse, UserCreate, UserLogin, UserResponse
+from backend.schemas import (
+    PasswordChange,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserResponse,
+)
 from backend.services import auth_service
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -106,3 +112,16 @@ def read_current_user(
     current_user: Annotated[User, Depends(get_current_user)],
 ) -> User:
     return current_user
+
+
+@router.post(
+    "/change-password",
+    response_model=TokenResponse,
+    summary="Cambiar la contraseña del usuario autenticado",
+)
+def change_password(
+    password_in: PasswordChange,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> TokenResponse:
+    return auth_service.change_user_password(db, current_user, password_in)

@@ -46,6 +46,28 @@ engine = create_db_engine(settings.database_url)
 SessionLocal = sessionmaker(bind=engine, class_=Session, autoflush=False, expire_on_commit=False)
 
 
+def migrate_users_token_version(db_engine: Engine) -> None:
+    """Añade `users.token_version` a bases creadas antes de este campo.
+
+    `create_all` no modifica tablas existentes. El valor por defecto `0`
+    mantiene válidos los tokens emitidos antes de la actualización: solo se
+    invalidan cuando el usuario cambia su contraseña.
+    """
+    if db_engine.dialect.name != "sqlite":
+        return
+
+    with db_engine.begin() as connection:
+        columns = connection.exec_driver_sql(
+            "PRAGMA table_info(users)"
+        ).mappings().all()
+        if not columns or any(row["name"] == "token_version" for row in columns):
+            return
+
+        connection.exec_driver_sql(
+            "ALTER TABLE users ADD COLUMN token_version INTEGER NOT NULL DEFAULT 0"
+        )
+
+
 def migrate_image_url_nullable(db_engine: Engine) -> None:
     """Quita el `NOT NULL` de `wishlist_items.image_url` en bases ya creadas.
 
