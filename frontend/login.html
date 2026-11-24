@@ -113,10 +113,15 @@
                    autocomplete="new-password" placeholder="Repite tu contraseña" required minlength="8">
           </div>
 
-          <label class="checkbox">
-            <input type="checkbox" name="terms" required>
-            Acepto los términos y la política de privacidad.
-          </label>
+          <div class="checkbox checkbox--terms">
+            <input id="register-terms" type="checkbox" name="terms" required>
+            <span>
+              <label for="register-terms">He leído y acepto los</label>
+              <a href="#legal-terms" data-legal-open="terms">términos del servicio</a>
+              y la
+              <a href="#legal-privacy" data-legal-open="privacy">política de privacidad</a>.
+            </span>
+          </div>
 
           <button class="btn btn--primary btn--block" type="submit">
             Crear cuenta
@@ -131,6 +136,70 @@
     </div>
 
   </main>
+
+  <dialog class="modal modal--legal" id="legal-modal" aria-labelledby="legal-modal-title">
+    <div class="modal__head">
+      <div>
+        <h2 class="modal__title" id="legal-modal-title">Términos y privacidad</h2>
+        <p class="modal__sub">Información sobre el uso de MyWishList.</p>
+      </div>
+      <button class="btn btn--ghost btn--sm" type="button" data-close aria-label="Cerrar términos y política">
+        Cerrar
+      </button>
+    </div>
+
+    <div class="modal__body legal-modal__body" id="legal-modal-body" tabindex="0" aria-label="Texto de términos y política de privacidad">
+      <section class="legal-section" id="legal-terms" tabindex="-1" aria-labelledby="legal-terms-title">
+        <h3 id="legal-terms-title">Términos del servicio</h3>
+
+        <h4>1. El servicio</h4>
+        <p>MyWishList permite crear y organizar listas de deseos y compartirlas mediante un enlace. El servicio se ofrece tal como está y puede cambiar, interrumpirse o dejar de estar disponible. No se garantiza que los precios, la disponibilidad o la información de los productos enlazados estén actualizados.</p>
+
+        <h4>2. Cuenta y uso responsable</h4>
+        <p>Para crear una cuenta solo se necesita un nombre de usuario y una contraseña; no pedimos el nombre real ni datos de contacto. Eres responsable de mantener la contraseña segura, de la actividad realizada con tu cuenta y de que el contenido que añadas sea lícito y no infrinja derechos de otras personas.</p>
+
+        <h4>3. Listas compartidas y contenido</h4>
+        <p>Quien tenga el enlace de una lista compartida puede ver su contenido y el nombre de usuario de quien la creó. No incluyas información confidencial o que no quieras hacer pública. Conservas los derechos sobre el contenido que aportas y autorizas su almacenamiento y visualización únicamente para prestar las funciones de la aplicación, incluida la compartición que decidas activar.</p>
+
+        <h4>4. Enlaces y recursos externos</h4>
+        <p>Los enlaces a tiendas y las imágenes pueden pertenecer a terceros. No controlamos sus contenidos, precios, disponibilidad ni prácticas de privacidad. Al abrir un enlace o cargar una imagen alojada externamente, el navegador puede comunicarse con ese sitio y transmitirle información técnica, como la dirección IP.</p>
+
+        <h4>5. Seguridad y cambios</h4>
+        <p>Aplicamos medidas técnicas para proteger las cuentas, pero ningún servicio puede garantizar seguridad o disponibilidad absolutas. Podemos actualizar estos términos; la versión vigente se mostrará en esta ventana. Si no estás de acuerdo, deja de usar el servicio.</p>
+      </section>
+
+      <section class="legal-section" id="legal-privacy" tabindex="-1" aria-labelledby="legal-privacy-title">
+        <h3 id="legal-privacy-title">Política de privacidad</h3>
+
+        <h4>1. Datos que tratamos</h4>
+        <p>No solicitamos ni guardamos tu nombre real, correo electrónico, teléfono ni domicilio. Para que funcione el servicio se guardan:</p>
+        <ul>
+          <li>El nombre de usuario y la contraseña en forma de hash; la contraseña no se conserva en texto legible.</li>
+          <li>Las listas y los datos que añadas, como títulos, descripciones, precios y enlaces o direcciones de imágenes.</li>
+          <li>Identificadores internos y fechas de creación necesarios para gestionar las cuentas y el contenido.</li>
+        </ul>
+
+        <h4>2. Para qué se utilizan</h4>
+        <p>Estos datos se usan para autenticarte, guardar y mostrar tus listas, permitir que las gestiones y publicar las listas que decidas compartir. La versión actual de la aplicación no integra herramientas propias de analítica, publicidad ni venta de datos.</p>
+
+        <h4>3. Sesión y almacenamiento</h4>
+        <p>Al iniciar sesión, el navegador guarda un token de acceso para mantener la sesión: en el almacenamiento local si eliges «Recordarme» o en el almacenamiento de sesión si no. El token contiene un identificador interno y su caducidad; no es una cookie. Puedes cerrar la sesión para eliminarlo del navegador.</p>
+
+        <h4>4. Compartición y servicios de terceros</h4>
+        <p>Las listas compartidas son accesibles para cualquiera que tenga su enlace y muestran el nombre de usuario asociado. Además, al cargar imágenes alojadas en otros sitios o abrir enlaces externos, esos proveedores pueden recibir información técnica de tu navegador y aplicar sus propias políticas de privacidad.</p>
+
+        <h4>5. Conservación y control</h4>
+        <p>Las listas y sus artículos permanecen guardados hasta que los elimines o se elimine la cuenta o la base de datos que los contiene. Actualmente no existe una opción para borrar la cuenta desde la aplicación; la eliminación de una cuenta requiere intervención de quien administra esta instancia.</p>
+
+        <h4>6. Infraestructura</h4>
+        <p>El servidor o proveedor de alojamiento puede procesar registros técnicos necesarios para operar y proteger el servicio. La información y el tiempo de conservación de esos registros dependen de la configuración y las condiciones del alojamiento, que no se detallan en la aplicación.</p>
+      </section>
+    </div>
+
+    <div class="modal__foot">
+      <button class="btn btn--primary" type="button" data-close>Cerrar</button>
+    </div>
+  </dialog>
 
   <script type="module" src="js/app.js"></script>
 </body>

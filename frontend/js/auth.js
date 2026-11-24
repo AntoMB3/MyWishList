@@ -113,6 +113,32 @@ export async function initLoginPage({ showToast }) {
   const switches = $$("[data-auth-switch]");
   const title = $("#auth-title");
   const subtitle = $("#auth-subtitle");
+  const legalDialog = $("#legal-modal");
+  const legalBody = $("#legal-modal-body");
+
+  $$("[data-legal-open]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      event.preventDefault();
+
+      const section = $(`#legal-${link.dataset.legalOpen}`);
+      if (!legalDialog || !legalBody || !section) return;
+
+      if (typeof legalDialog.showModal === "function") {
+        if (!legalDialog.open) legalDialog.showModal();
+      } else {
+        legalDialog.setAttribute("open", "");
+      }
+
+      requestAnimationFrame(() => {
+        const scrollTop =
+          legalBody.scrollTop +
+          section.getBoundingClientRect().top -
+          legalBody.getBoundingClientRect().top;
+        legalBody.scrollTo({ top: Math.max(0, scrollTop), behavior: "smooth" });
+        section.focus({ preventScroll: true });
+      });
+    });
+  });
 
   function setTab(name) {
     tabs.forEach((tab) => {
