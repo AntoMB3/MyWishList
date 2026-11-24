@@ -368,6 +368,14 @@ select {
   width: 100%;
 }
 
+.btn:disabled,
+.btn:disabled:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
 .btn-row {
   display: flex;
   flex-wrap: wrap;

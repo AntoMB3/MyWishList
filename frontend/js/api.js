@@ -170,6 +170,14 @@ export async function getCurrentUser() {
 }
 
 /* --------------------------------------------------------------------------
+   Configuración pública (/api/config)
+   -------------------------------------------------------------------------- */
+
+export async function getAppConfig() {
+  return apiFetch("/api/config", { auth: false });
+}
+
+/* --------------------------------------------------------------------------
    Endpoints de Wishlists (/api/wishlists)
    -------------------------------------------------------------------------- */
 

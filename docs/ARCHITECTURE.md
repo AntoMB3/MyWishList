@@ -16,6 +16,11 @@
      producto (Open Graph / Twitter Cards / JSON-LD), se pega el enlace directo
      de la imagen, o se sube una foto que se comprime a WebP y se guarda en el
      servidor. Sin imagen, la tarjeta usa una ilustración de respaldo.
+5. **Límites por usuario:** máximo **5 wishlists** por cuenta y **20 artículos**
+   por wishlist. Los límites existen para proteger el servidor y la base de
+   datos; el backend responde `409 Conflict` al intentar superarlos. Las fotos
+   subidas se aceptan hasta 5 MB y siempre se recomprimen en el servidor a un
+   WebP de como máximo 512 px y 40 KB.
 
 ---
 
@@ -51,6 +56,7 @@ MyWhishList/
 │   ├── routers/             # Capa de controladores HTTP (Endpoints)
 │   │   ├── __init__.py
 │   │   ├── auth.py          # /api/auth (register, login, me)
+│   │   ├── config.py        # /api/config (límites públicos para el frontend)
 │   │   ├── wishlists.py     # /api/wishlists (mis listas, crear, ver por share_id)
 │   │   ├── items.py         # /api/wishlists/{wishlist_id}/items (POST, PUT, DELETE)
 │   │   └── media.py         # /api/media (unfurl, subida) y /media/{archivo}
@@ -123,9 +129,9 @@ MyWhishList/
 | `wishlist_id` | `INTEGER` | `FOREIGN KEY (wishlists.id) ON DELETE CASCADE` | Lista a la que pertenece |
 | `created_at` | `DATETIME` | `DEFAULT CURRENT_TIMESTAMP` | Fecha de creación |
 
-> Un usuario puede tener **varias wishlists**. Cada una se comparte con su propio
-> `share_id` opaco (UUID hex), por lo que no es enumerable. El autor de un
-> artículo se deduce de `item.wishlist.owner`.
+> Un usuario puede tener **hasta 5 wishlists** y cada una **hasta 20 artículos**.
+> Cada lista se comparte con su propio `share_id` opaco (UUID hex), por lo que
+> no es enumerable. El autor de un artículo se deduce de `item.wishlist.owner`.
 
 ---
 
@@ -169,12 +175,13 @@ MyWhishList/
 | `POST` | `/api/auth/register` | Público | Registra un nuevo usuario | `201`, `400`, `422` |
 | `POST` | `/api/auth/login` | Público | Autentica y devuelve Token JWT | `200`, `401`, `422` |
 | `GET` | `/api/auth/me` | **Protegido** | Devuelve datos del usuario logueado | `200`, `401` |
+| `GET` | `/api/config` | Público | Límites públicos usados por el frontend | `200` |
 | `GET` | `/api/wishlists/mine` | **Protegido** | Lista las wishlists del usuario actual | `200`, `401` |
-| `POST` | `/api/wishlists` | **Protegido** | Crea una wishlist propia | `201`, `401`, `422` |
+| `POST` | `/api/wishlists` | **Protegido** | Crea una wishlist propia | `201`, `401`, `409`, `422` |
 | `GET` | `/api/wishlists/{share_id}` | Público | Obtiene una wishlist compartida | `200`, `404`, `422` |
 | `PUT` | `/api/wishlists/{wishlist_id}` | **Protegido (Autor)** | Edita una wishlist propia | `200`, `401`, `403`, `404`, `422` |
 | `DELETE` | `/api/wishlists/{wishlist_id}` | **Protegido (Autor)** | Elimina una wishlist y sus artículos | `204`, `401`, `403`, `404` |
-| `POST` | `/api/wishlists/{wishlist_id}/items` | **Protegido (Autor)** | Crea un artículo en una lista propia | `201`, `401`, `403`, `404`, `422` |
+| `POST` | `/api/wishlists/{wishlist_id}/items` | **Protegido (Autor)** | Crea un artículo en una lista propia | `201`, `401`, `403`, `404`, `409`, `422` |
 | `PUT` | `/api/wishlists/{wishlist_id}/items/{item_id}` | **Protegido (Autor)** | Edita un artículo propio | `200`, `401`, `403`, `404`, `422` |
 | `DELETE` | `/api/wishlists/{wishlist_id}/items/{item_id}` | **Protegido (Autor)** | Elimina un artículo propio | `204`, `401`, `403`, `404` |
 | `POST` | `/api/media/unfurl` | **Protegido** | Busca la imagen del enlace del producto | `200`, `401`, `422` |
@@ -211,7 +218,8 @@ MyWhishList/
    - Los precios se almacenan como `Numeric(10, 2)` / `Decimal` en Python para evitar errores de precisión de punto flotante (`float`).
 6. **Imágenes de artículos (Open Graph y subida):**
    - `POST /api/media/unfurl` solo lee el HTML del enlace: no descarga ni rehospeda imágenes ajenas. Para evitar SSRF, cada petición y cada redirección exige `http`/`https` y una IP pública (rechaza localhost, rangos privados, link-local y metadata de cloud).
-   - `POST /api/media` valida el contenido real (JPEG/PNG/WebP), limita a 5 MB, quita el EXIF, reduce el lado mayor a 800 px y guarda WebP calidad 75 con nombre UUID.
+   - `POST /api/media` valida el contenido real (JPEG/PNG/WebP), limita a 5 MB, quita el EXIF y recompone la imagen a WebP con nombre UUID. El lado mayor se reduce a 512 px y, si el archivo supera 40 KB, se disminuyen progresivamente dimensión y calidad hasta cumplir el objetivo.
+   - Las URLs externas de imagen no se descargan ni recomprimen: solo se comprimen las fotos subidas al servidor.
    - `GET /media/{archivo}` solo acepta nombres con formato UUID `.webp`, sin listado de directorio. Las fotos se sirven con caché larga e inmutable.
    - Al borrar un artículo o reemplazar su foto se elimina el archivo propio anterior.
 

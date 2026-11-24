@@ -6,9 +6,10 @@ routers solo se ocupen de HTTP.
 """
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from backend.config import settings
 from backend.models import User, Wishlist
 from backend.schemas import (
     ItemResponse,
@@ -57,12 +58,31 @@ def list_own_wishlists(db: Session, current_user: User) -> list[Wishlist]:
     return list(db.scalars(statement))
 
 
+def _count_own_wishlists(db: Session, user_id: int) -> int:
+    """Cuenta las wishlists del usuario sin cargar sus artículos."""
+    statement = select(func.count(Wishlist.id)).where(Wishlist.user_id == user_id)
+    return db.scalar(statement) or 0
+
+
 def create_wishlist(
     db: Session,
     wishlist_in: WishlistCreate,
     current_user: User,
 ) -> Wishlist:
-    """Crea una wishlist asignándola al usuario autenticado."""
+    """Crea una wishlist asignándola al usuario autenticado.
+
+    Contrato: lanza `HTTPException(409)` si el usuario ya alcanzó el límite
+    de wishlists permitido.
+    """
+    if _count_own_wishlists(db, current_user.id) >= settings.max_wishlists_per_user:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Has alcanzado el límite de {settings.max_wishlists_per_user} "
+                "wishlists por usuario. Elimina una para crear otra."
+            ),
+        )
+
     wishlist = Wishlist(**wishlist_in.model_dump(), user_id=current_user.id)
     db.add(wishlist)
     db.commit()

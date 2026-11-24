@@ -33,8 +33,25 @@ from backend.schemas import MEDIA_URL_PATTERN
 
 MAX_HTML_BYTES = 1_000_000
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024
-MAX_IMAGE_SIDE = 800
-WEBP_QUALITY = 75
+MAX_IMAGE_SIDE = 512
+WEBP_QUALITY = 60
+MAX_STORED_IMAGE_BYTES = 40 * 1024
+# Se intenta conservar el tamaño y, si no se alcanza el objetivo de peso,
+# se reduce la dimensión y la calidad de forma progresiva.
+IMAGE_SIDE_STEPS = tuple(
+    dict.fromkeys(
+        side
+        for side in (MAX_IMAGE_SIDE, 448, 384, 320, 256, 192, 128, 96, 64)
+        if side <= MAX_IMAGE_SIDE
+    )
+)
+IMAGE_QUALITY_STEPS = tuple(
+    dict.fromkeys(
+        quality
+        for quality in (WEBP_QUALITY, 50, 40, 30, 20)
+        if quality <= WEBP_QUALITY
+    )
+)
 UNFURL_TIMEOUT = httpx.Timeout(5.0, connect=3.0)
 MAX_REDIRECTS = 3
 ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP"}
@@ -247,6 +264,15 @@ def _media_dir() -> Path:
     return path
 
 
+def _encode_webp(image: Image.Image, side: int, quality: int) -> bytes:
+    """Codifica una copia redimensionada de la imagen como WebP."""
+    candidate = image.copy()
+    candidate.thumbnail((side, side), Image.Resampling.LANCZOS)
+    output = BytesIO()
+    candidate.save(output, format="WEBP", quality=quality, method=6)
+    return output.getvalue()
+
+
 def store_image(data: bytes) -> str:
     """Comprime la imagen recibida y devuelve su ruta pública `/media/...`."""
     if len(data) > MAX_UPLOAD_BYTES:
@@ -269,13 +295,25 @@ def store_image(data: bytes) -> str:
     else:
         image = image.convert("RGB")
 
-    image.thumbnail((MAX_IMAGE_SIDE, MAX_IMAGE_SIDE), Image.Resampling.LANCZOS)
+    compressed: bytes | None = None
+    for side in IMAGE_SIDE_STEPS:
+        for quality in IMAGE_QUALITY_STEPS:
+            candidate = _encode_webp(image, side, quality)
+            if len(candidate) <= MAX_STORED_IMAGE_BYTES:
+                compressed = candidate
+                break
+        if compressed is not None:
+            break
 
-    output = BytesIO()
-    image.save(output, format="WEBP", quality=WEBP_QUALITY, method=4)
+    if compressed is None:
+        compressed = _encode_webp(
+            image,
+            IMAGE_SIDE_STEPS[-1],
+            IMAGE_QUALITY_STEPS[-1],
+        )
 
     filename = f"{uuid.uuid4()}.webp"
-    (_media_dir() / filename).write_bytes(output.getvalue())
+    (_media_dir() / filename).write_bytes(compressed)
     return f"/media/{filename}"
 
 

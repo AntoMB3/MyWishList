@@ -194,6 +194,29 @@ class TestAuthRouter:
         assert response.json()["username"] == "alex"
 
 
+class TestConfigRouter:
+    def test_returns_public_limits(
+        self,
+        client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "max_wishlists_per_user", 7)
+        monkeypatch.setattr(settings, "max_items_per_wishlist", 11)
+
+        response = client.get("/api/config")
+
+        assert response.status_code == 200
+        body = response.json()
+        assert body["max_wishlists_per_user"] == 7
+        assert body["max_items_per_wishlist"] == 11
+        assert body["max_upload_bytes"] == media_service.MAX_UPLOAD_BYTES
+        assert body["max_image_side"] == media_service.MAX_IMAGE_SIDE
+        assert (
+            body["max_stored_image_bytes"]
+            == media_service.MAX_STORED_IMAGE_BYTES
+        )
+
+
 class TestWishlistsRouter:
     def test_mine_requires_token(self, client: TestClient) -> None:
         assert client.get("/api/wishlists/mine").status_code == 401
@@ -244,6 +267,29 @@ class TestWishlistsRouter:
 
         assert response.status_code == 201
         assert response.json()["share_id"] == SHARE_ID
+
+    def test_create_propagates_limit_conflict(
+        self,
+        authenticated_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        def fake_create(
+            db: Session,
+            wishlist_in: WishlistCreate,
+            current_user: User,
+        ) -> Wishlist:
+            raise HTTPException(status_code=409, detail="Límite de wishlists.")
+
+        monkeypatch.setattr(wishlist_service, "create_wishlist", fake_create)
+
+        response = authenticated_client.post(
+            "/api/wishlists",
+            headers={"Authorization": "Bearer token"},
+            json={"title": "Lista extra"},
+        )
+
+        assert response.status_code == 409
+        assert response.json()["detail"] == "Límite de wishlists."
 
     def test_create_requires_token(self, client: TestClient) -> None:
         response = client.post("/api/wishlists", json={"title": "Lista"})
@@ -423,6 +469,30 @@ class TestItemsRouter:
 
         assert response.status_code == 201
         assert response.json()["image_url"] is None
+
+    def test_create_propagates_limit_conflict(
+        self,
+        authenticated_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        def fake_create(
+            db: Session,
+            wishlist_id: int,
+            item_in: ItemCreate,
+            current_user: User,
+        ) -> WishlistItem:
+            raise HTTPException(status_code=409, detail="Límite de artículos.")
+
+        monkeypatch.setattr(item_service, "create_item", fake_create)
+
+        response = authenticated_client.post(
+            "/api/wishlists/3/items",
+            headers={"Authorization": "Bearer token"},
+            json=_item_payload(),
+        )
+
+        assert response.status_code == 409
+        assert response.json()["detail"] == "Límite de artículos."
 
     def test_create_404_when_wishlist_missing(
         self,

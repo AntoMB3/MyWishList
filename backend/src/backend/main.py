@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from backend import models  # noqa: F401  (registra las tablas en Base.metadata)
 from backend.config import BASE_DIR
 from backend.database import Base, engine, migrate_image_url_nullable
-from backend.routers import auth, items, media, wishlists
+from backend.routers import auth, config, items, media, wishlists
 
 FRONTEND_DIR = BASE_DIR.parent / "frontend"
 
@@ -35,6 +35,7 @@ async def disable_static_html_cache(request: Request, call_next) -> Response:
 
 
 app.include_router(auth.router)
+app.include_router(config.router)
 app.include_router(wishlists.router)
 app.include_router(items.router)
 app.include_router(media.router)

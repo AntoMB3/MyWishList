@@ -12,6 +12,7 @@ import {
   deleteItem,
   deleteWishlist,
   fetchProductImage,
+  getAppConfig,
   getMyWishlists,
   getSharedWishlist,
   updateItem,
@@ -33,6 +34,23 @@ const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)]
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PLACEHOLDER_IMAGE = "assets/placeholder.svg";
 const PREVIEW_IMAGE = "assets/image-icon.svg";
+
+const DEFAULT_LIMITS = {
+  max_wishlists_per_user: 5,
+  max_items_per_wishlist: 20,
+  max_upload_bytes: 5 * 1024 * 1024,
+  max_image_side: 512,
+  max_stored_image_bytes: 40 * 1024,
+};
+
+async function fetchAppLimits() {
+  try {
+    const config = await getAppConfig();
+    return { ...DEFAULT_LIMITS, ...(config || {}) };
+  } catch {
+    return DEFAULT_LIMITS;
+  }
+}
 
 /* --------------------------------------------------------------------------
    Utilidades de interfaz y formato
@@ -481,6 +499,8 @@ async function initWishlistsPage() {
     return;
   }
 
+  const limits = await fetchAppLimits();
+
   updateNavbarUser(currentUser, "0 listas");
 
   const grid = $("#wishlist-grid");
@@ -510,10 +530,25 @@ async function initWishlistsPage() {
 
   function refreshSummary() {
     const total = cards().length;
-    const label = `${total} ${total === 1 ? "lista" : "listas"}`;
+    const max = limits.max_wishlists_per_user;
+    const atLimit = total >= max;
+    const label = `${total} / ${max} ${max === 1 ? "lista" : "listas"}`;
     if (countPill) countPill.textContent = label;
-    if (userRole) userRole.textContent = label;
+    if (userRole) {
+      userRole.textContent = `${total} ${total === 1 ? "lista" : "listas"}`;
+    }
     if (emptyState) emptyState.hidden = total > 0;
+
+    $$('[data-new="wishlist"]').forEach((button) => {
+      button.disabled = atLimit;
+      if (atLimit) {
+        button.title = `Máximo ${max} listas por cuenta`;
+        button.setAttribute("aria-label", `Máximo ${max} listas por cuenta`);
+      } else {
+        button.removeAttribute("title");
+        button.removeAttribute("aria-label");
+      }
+    });
   }
 
   function resetForm() {
@@ -594,8 +629,12 @@ async function initWishlistsPage() {
 
   /* Abrir directamente el formulario de creación (p. ej. ?new=wishlist). */
   if (params.get("new") === "wishlist" && modal) {
-    resetForm();
-    openDialog(modal);
+    if (cards().length >= limits.max_wishlists_per_user) {
+      showToast(`Máximo ${limits.max_wishlists_per_user} listas por cuenta.`);
+    } else {
+      resetForm();
+      openDialog(modal);
+    }
   }
 
   /* Editar una tarjeta existente. */
@@ -625,6 +664,10 @@ async function initWishlistsPage() {
         updateCardInDom(editingCard, updated);
         showToast("Wishlist actualizada.");
       } else if (grid) {
+        if (cards().length >= limits.max_wishlists_per_user) {
+          showToast(`Máximo ${limits.max_wishlists_per_user} listas por cuenta.`);
+          return;
+        }
         const created = await createWishlist({ title, description });
         const card = createWishlistCardElement(created);
         grid.prepend(card);
@@ -725,6 +768,7 @@ async function initWishlistDetailPage() {
   if (grid) grid.replaceChildren();
 
   const currentUser = await fetchAuthenticatedUser();
+  const limits = await fetchAppLimits();
 
   if (currentUser) {
     bindLogoutButtons();
@@ -878,7 +922,8 @@ async function initWishlistDetailPage() {
     const all = cards();
     const visible = all.filter((card) => !card.hidden).length;
     const query = searchInput?.value.trim() ?? "";
-    const totalLabel = `${all.length} ${all.length === 1 ? "artículo" : "artículos"}`;
+    const max = limits.max_items_per_wishlist;
+    const totalLabel = `${all.length} / ${max} artículos`;
 
     if (countLabel) {
       countLabel.textContent = query
@@ -908,6 +953,18 @@ async function initWishlistDetailPage() {
             : "Prueba con otro término de búsqueda.";
       }
     }
+
+    const atLimit = all.length >= max;
+    $$('[data-new="item"]').forEach((button) => {
+      button.disabled = atLimit;
+      if (atLimit) {
+        button.title = `Máximo ${max} artículos por lista`;
+        button.setAttribute("aria-label", `Máximo ${max} artículos por lista`);
+      } else {
+        button.removeAttribute("title");
+        button.removeAttribute("aria-label");
+      }
+    });
   }
 
   function filterCards() {
@@ -970,8 +1027,12 @@ async function initWishlistDetailPage() {
       showToast("Elige un archivo de imagen.");
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showToast("La imagen no puede pesar más de 5 MB.");
+    if (file.size > limits.max_upload_bytes) {
+      const maxUploadLabel =
+        limits.max_upload_bytes >= 1024 * 1024
+          ? `${Math.round(limits.max_upload_bytes / (1024 * 1024))} MB`
+          : `${Math.round(limits.max_upload_bytes / 1024)} KB`;
+      showToast(`La imagen no puede pesar más de ${maxUploadLabel}.`);
       return;
     }
 
@@ -982,7 +1043,7 @@ async function initWishlistDetailPage() {
       const data = await uploadProductImage(file);
       setImageValue(
         data?.image_url ?? "",
-        "Foto lista y guardada en el servidor."
+        "Foto lista y comprimida a WebP en el servidor."
       );
     } catch (error) {
       if (error?.status === 401) {
@@ -1059,9 +1120,12 @@ async function initWishlistDetailPage() {
   function resetForm() {
     editingCard = null;
     form?.reset();
+    const maxKb = Math.round(limits.max_stored_image_bytes / 1024);
     setImageValue(
       "",
-      "Pega el enlace del producto y pulsa «Buscar imagen», pega el enlace directo de la imagen, o sube una foto."
+      "Pega el enlace del producto y pulsa «Buscar imagen», pega el enlace " +
+        "directo de la imagen, o sube una foto. Las fotos se comprimen " +
+        `automáticamente a WebP (máx. ${limits.max_image_side} px y ${maxKb} KB).`
     );
     if (modalTitle) modalTitle.textContent = "Nuevo artículo";
     if (modalSub) {
@@ -1146,6 +1210,12 @@ async function initWishlistDetailPage() {
           applyItemDataToCard(editingCard, updated);
           showToast("Artículo actualizado.");
         } else if (grid) {
+          if (cards().length >= limits.max_items_per_wishlist) {
+            showToast(
+              `Máximo ${limits.max_items_per_wishlist} artículos por lista.`
+            );
+            return;
+          }
           const created = await createItem(wishlist.id, payload);
           const card = createItemCardElement(created);
           grid.prepend(card);

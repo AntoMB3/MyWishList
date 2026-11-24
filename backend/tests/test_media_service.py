@@ -95,9 +95,42 @@ class TestStoreImage:
 
         stored = media_dir / image_url.rsplit("/", 1)[-1]
         assert stored.is_file()
+        assert stored.stat().st_size <= media_service.MAX_STORED_IMAGE_BYTES
         with Image.open(stored) as image:
             assert image.format == "WEBP"
             assert max(image.size) <= media_service.MAX_IMAGE_SIDE
+
+    def test_always_stays_under_the_target_size(self, media_dir: Path) -> None:
+        noisy = Image.effect_noise((1600, 1200), 100).convert("RGB")
+        buffer = BytesIO()
+        noisy.save(buffer, format="PNG")
+
+        image_url = media_service.store_image(buffer.getvalue())
+
+        stored = media_dir / image_url.rsplit("/", 1)[-1]
+        assert stored.stat().st_size <= media_service.MAX_STORED_IMAGE_BYTES
+        with Image.open(stored) as image:
+            assert max(image.size) <= media_service.MAX_IMAGE_SIDE
+
+    def test_does_not_upscale_small_images(self, media_dir: Path) -> None:
+        image_url = media_service.store_image(_image_bytes(size=(64, 48)))
+
+        stored = media_dir / image_url.rsplit("/", 1)[-1]
+        with Image.open(stored) as image:
+            assert image.size == (64, 48)
+
+    def test_removes_exif_metadata(self, media_dir: Path) -> None:
+        source = Image.new("RGB", (300, 200), (20, 120, 200))
+        exif = source.getexif()
+        exif[0x0131] = "MyWishList"
+        buffer = BytesIO()
+        source.save(buffer, format="JPEG", exif=exif)
+
+        image_url = media_service.store_image(buffer.getvalue())
+
+        stored = media_dir / image_url.rsplit("/", 1)[-1]
+        with Image.open(stored) as image:
+            assert not image.getexif()
 
     def test_rejects_non_image_bytes(self, media_dir: Path) -> None:
         with pytest.raises(HTTPException) as exc_info:

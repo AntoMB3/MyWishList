@@ -8,9 +8,10 @@ a una lista del usuario autenticado.
 from typing import Any
 
 from fastapi import HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from backend.config import settings
 from backend.models import User, WishlistItem
 from backend.schemas import ItemCreate, ItemUpdate
 from backend.services.media_service import delete_stored_image
@@ -43,10 +44,25 @@ def create_item(
 ) -> WishlistItem:
     """Crea un artículo dentro de una wishlist del usuario autenticado.
 
-    Contrato: lanza `HTTPException(404)` si la wishlist no existe y
-    `HTTPException(403)` si pertenece a otro usuario.
+    Contrato: lanza `HTTPException(404)` si la wishlist no existe,
+    `HTTPException(403)` si pertenece a otro usuario y `HTTPException(409)`
+    si la wishlist ya alcanzó el límite de artículos.
     """
     wishlist = get_owned_wishlist(db, wishlist_id, current_user)
+
+    item_count = db.scalar(
+        select(func.count(WishlistItem.id)).where(
+            WishlistItem.wishlist_id == wishlist.id
+        )
+    ) or 0
+    if item_count >= settings.max_items_per_wishlist:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"Has alcanzado el límite de {settings.max_items_per_wishlist} "
+                "artículos por wishlist."
+            ),
+        )
 
     item = WishlistItem(**_item_values(item_in), wishlist_id=wishlist.id)
     db.add(item)

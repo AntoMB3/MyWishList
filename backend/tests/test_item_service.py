@@ -91,6 +91,79 @@ class TestCreateItem:
         assert exc_info.value.status_code == 403
 
 
+class TestItemLimit:
+    def test_allows_items_up_to_the_limit(
+        self,
+        session: Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "max_items_per_wishlist", 2)
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex)
+
+        for index in range(2):
+            created = item_service.create_item(
+                session,
+                wishlist.id,
+                ItemCreate(**_item_payload(title=f"Artículo {index}")),
+                alex,
+            )
+            assert created.id is not None
+
+    def test_rejects_item_over_the_limit(
+        self,
+        session: Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "max_items_per_wishlist", 2)
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex)
+        for index in range(2):
+            item_service.create_item(
+                session,
+                wishlist.id,
+                ItemCreate(**_item_payload(title=f"Artículo {index}")),
+                alex,
+            )
+
+        with pytest.raises(HTTPException) as exc_info:
+            item_service.create_item(
+                session,
+                wishlist.id,
+                ItemCreate(**_item_payload(title="Artículo extra")),
+                alex,
+            )
+
+        assert exc_info.value.status_code == 409
+        assert "2 artículos" in exc_info.value.detail
+
+    def test_does_not_count_items_from_other_wishlists(
+        self,
+        session: Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "max_items_per_wishlist", 2)
+        alex = _add_user(session)
+        first = _add_wishlist(session, alex, "Primera")
+        second = _add_wishlist(session, alex, "Segunda")
+        for index in range(2):
+            item_service.create_item(
+                session,
+                first.id,
+                ItemCreate(**_item_payload(title=f"Artículo {index}")),
+                alex,
+            )
+
+        created = item_service.create_item(
+            session,
+            second.id,
+            ItemCreate(**_item_payload(title="Otro artículo")),
+            alex,
+        )
+
+        assert created.wishlist_id == second.id
+
+
 class TestUpdateItem:
     def test_updates_item_in_own_wishlist(self, session: Session) -> None:
         alex = _add_user(session)

@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     secret_key: SecretStr = SecretStr(DEFAULT_DEV_SECRET_KEY)
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 24 * 60
+    max_wishlists_per_user: int = 5
+    max_items_per_wishlist: int = 20
 
     @property
     def uses_default_secret_key(self) -> bool:

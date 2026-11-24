@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from backend.config import settings
 from backend.models import User, Wishlist, WishlistItem
 from backend.schemas import WishlistCreate, WishlistUpdate
 from backend.services import wishlist_service
@@ -97,6 +98,63 @@ class TestCreateWishlist:
         assert len(wishlist.share_id) == 32
         assert wishlist.created_at is not None
         assert session.get(Wishlist, wishlist.id) is not None
+
+
+class TestWishlistLimit:
+    def test_allows_wishlists_up_to_the_limit(
+        self,
+        session: Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "max_wishlists_per_user", 2)
+        alex = _add_user(session)
+
+        for index in range(2):
+            created = wishlist_service.create_wishlist(
+                session,
+                WishlistCreate(title=f"Lista {index}"),
+                alex,
+            )
+            assert created.id is not None
+
+    def test_rejects_wishlist_over_the_limit(
+        self,
+        session: Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "max_wishlists_per_user", 2)
+        alex = _add_user(session)
+        _add_wishlist(session, alex, "Primera")
+        _add_wishlist(session, alex, "Segunda")
+
+        with pytest.raises(HTTPException) as exc_info:
+            wishlist_service.create_wishlist(
+                session,
+                WishlistCreate(title="Tercera"),
+                alex,
+            )
+
+        assert exc_info.value.status_code == 409
+        assert "2 wishlists" in exc_info.value.detail
+
+    def test_does_not_count_other_users_wishlists(
+        self,
+        session: Session,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "max_wishlists_per_user", 2)
+        alex = _add_user(session)
+        bob = _add_user(session, "bob")
+        _add_wishlist(session, bob, "De Bob 1")
+        _add_wishlist(session, bob, "De Bob 2")
+
+        created = wishlist_service.create_wishlist(
+            session,
+            WishlistCreate(title="De Alex"),
+            alex,
+        )
+
+        assert created.user_id == alex.id
 
 
 class TestGetWishlistByShareId:

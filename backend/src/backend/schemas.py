@@ -220,3 +220,13 @@ class MediaUploadResponse(BaseModel):
     """Imagen propia ya comprimida y almacenada en el servidor."""
 
     image_url: str
+
+
+class AppConfigResponse(BaseModel):
+    """Límites públicos que el frontend usa para guiar al usuario."""
+
+    max_wishlists_per_user: int
+    max_items_per_wishlist: int
+    max_upload_bytes: int
+    max_image_side: int
+    max_stored_image_bytes: int
