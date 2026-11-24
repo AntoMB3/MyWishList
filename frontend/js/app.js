@@ -208,7 +208,7 @@ function createWishlistCardElement(wishlist) {
   card.dataset.itemCount = String(itemCount);
   card.dataset.createdAt = wishlist.created_at || "";
 
-  // Top row (icon + badge)
+  // Top row (icon)
   const top = document.createElement("div");
   top.className = "wishlist-card__top";
 
@@ -228,11 +228,7 @@ function createWishlistCardElement(wishlist) {
     ])
   );
 
-  const badge = document.createElement("span");
-  badge.className = "badge badge--soft";
-  badge.textContent = "Compartible";
-
-  top.append(iconWrap, badge);
+  top.append(iconWrap);
 
   // Title
   const h2 = document.createElement("h2");
@@ -594,6 +590,12 @@ async function initWishlistsPage() {
     });
   });
 
+  /* Abrir directamente el formulario de creación (p. ej. ?new=wishlist). */
+  if (params.get("new") === "wishlist" && modal) {
+    resetForm();
+    openDialog(modal);
+  }
+
   /* Editar una tarjeta existente. */
   document.addEventListener("click", (event) => {
     const button = event.target.closest('[data-action="edit-wishlist"]');
@@ -715,7 +717,7 @@ async function initWishlistDetailPage() {
   const ownerInlineEl = $(".owner-inline");
   const headMetaItems = $$(".list-head__meta .meta-item");
   const shareUrlEl = $("#share-url");
-  const segmentedControl = $(".segmented");
+  const createWishlistBtn = $("#create-my-wishlist");
   const backToListsBtn = $('.navbar a[aria-label="Volver a mis listas"]');
 
   if (grid) grid.replaceChildren();
@@ -733,9 +735,14 @@ async function initWishlistDetailPage() {
     }
   }
 
+  if (createWishlistBtn) {
+    createWishlistBtn.href = currentUser
+      ? "/?new=wishlist"
+      : `login.html?next=${encodeURIComponent("/?new=wishlist")}`;
+  }
+
   function renderWishlistNotFound(message) {
     document.body.dataset.viewMode = "visitor";
-    if (segmentedControl) segmentedControl.hidden = true;
     if (listTitleEl) listTitleEl.textContent = "Wishlist no disponible";
     if (listDescEl) listDescEl.textContent = message;
     if (breadcrumbCurrent) breadcrumbCurrent.textContent = "No encontrada";
@@ -787,9 +794,6 @@ async function initWishlistDetailPage() {
 
   // Configurar modo de vista y navbar
   document.body.dataset.viewMode = isOwner ? "owner" : "visitor";
-  if (segmentedControl) {
-    segmentedControl.hidden = !isOwner;
-  }
 
   if (currentUser) {
     updateNavbarUser(
@@ -1063,26 +1067,6 @@ async function initWishlistDetailPage() {
       } finally {
         confirmButton.disabled = false;
       }
-    });
-
-    /* Cambio entre vista dueño y previsualización visitante. */
-    $$("[data-view-toggle]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const mode = button.dataset.viewToggle;
-        document.body.dataset.viewMode = mode;
-
-        $$("[data-view-toggle]").forEach((item) => {
-          const isActive = item === button;
-          item.classList.toggle("is-active", isActive);
-          item.setAttribute("aria-pressed", String(isActive));
-        });
-
-        showToast(
-          mode === "visitor"
-            ? "Vista visitante: así verá la lista quien reciba el enlace."
-            : "Vista dueño: puedes crear, editar y eliminar artículos."
-        );
-      });
     });
   }
 

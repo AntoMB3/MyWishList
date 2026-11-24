@@ -12,9 +12,9 @@
 
   <main class="auth">
 
-    <!-- Panel de marca -->
-    <aside class="auth__aside">
-      <a class="brand brand--on-dark" href="login.html">
+    <div class="auth__inner">
+
+      <a class="brand auth__brand" href="login.html">
         <span class="brand__mark" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8Z"/>
@@ -23,61 +23,12 @@
         <span class="brand__name">My<span>WishList</span></span>
       </a>
 
-      <div class="auth__pitch">
-        <h1>Todo lo que deseas, en una sola lista.</h1>
-        <p>Guarda los artículos de cualquier tienda, organízalos en listas y comparte un enlace con quien tú quieras.</p>
+      <header class="auth__head">
+        <h1 id="auth-title">Bienvenido de nuevo</h1>
+        <p id="auth-subtitle">Entra para gestionar tus listas de deseos.</p>
+      </header>
 
-        <ul class="auth__features">
-          <li>
-            <span class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 6 9 17l-5-5"/>
-              </svg>
-            </span>
-            <span>Centraliza enlaces de todas tus tiendas favoritas.</span>
-          </li>
-          <li>
-            <span class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/>
-                <path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>
-              </svg>
-            </span>
-            <span>Comparte cada lista con un enlace privado y no enumerable.</span>
-          </li>
-          <li>
-            <span class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/>
-              </svg>
-            </span>
-            <span>Tus datos protegidos: solo tú decides qué se comparte.</span>
-          </li>
-        </ul>
-      </div>
-
-      <p class="auth__aside-foot">MyWishList · Guarda, organiza y comparte lo que te gusta.</p>
-    </aside>
-
-    <!-- Formularios -->
-    <section class="auth__panel">
       <div class="auth-card">
-
-        <div class="auth__mobile-brand">
-          <span class="brand">
-            <span class="brand__mark" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.7-7.5 1.1-1.1a5.5 5.5 0 0 0 0-7.8Z"/>
-              </svg>
-            </span>
-            <span class="brand__name">My<span>WishList</span></span>
-          </span>
-        </div>
-
-        <div class="auth-card__head">
-          <h2 id="auth-title">Bienvenido de nuevo</h2>
-          <p id="auth-subtitle">Entra para gestionar tus listas de deseos.</p>
-        </div>
 
         <div class="tabs" role="tablist" aria-label="Acceso o registro">
           <button class="tabs__btn is-active" type="button" role="tab" aria-selected="true"
@@ -175,27 +126,9 @@
           </button>
         </form>
 
-        <p class="auth-switch" data-auth-switch="login">
-          ¿Aún no tienes cuenta?
-          <button type="button" data-auth-tab="register">Crear una gratis</button>
-        </p>
-        <p class="auth-switch" data-auth-switch="register" hidden>
-          ¿Ya tienes cuenta?
-          <button type="button" data-auth-tab="login">Inicia sesión</button>
-        </p>
-
-        <div class="demo-hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="9"/>
-            <path d="M12 8h.01M11 12h1v4h1"/>
-          </svg>
-          <span>
-            <strong>Acceso seguro:</strong> tus credenciales se validan contra la API con Argon2 y sesiones JWT.
-          </span>
-        </div>
-
       </div>
-    </section>
+
+    </div>
 
   </main>
 
