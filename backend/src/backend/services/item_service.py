@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from backend.models import User, WishlistItem
 from backend.schemas import ItemCreate, ItemUpdate
+from backend.services.media_service import delete_stored_image
 from backend.services.wishlist_service import get_owned_wishlist
 
 _ITEM_NOT_FOUND = HTTPException(
@@ -29,7 +30,8 @@ def _item_values(item_in: ItemCreate | ItemUpdate) -> dict[str, Any]:
     """
     values = item_in.model_dump()
     values["url"] = str(values["url"])
-    values["image_url"] = str(values["image_url"])
+    image_url = values.get("image_url")
+    values["image_url"] = str(image_url) if image_url else None
     return values
 
 
@@ -80,10 +82,14 @@ def update_item(
     get_owned_wishlist(db, wishlist_id, current_user)
     item = _get_item(db, wishlist_id, item_id)
 
+    previous_image = item.image_url
     for field, value in _item_values(item_in).items():
         setattr(item, field, value)
     db.commit()
     db.refresh(item)
+
+    if previous_image != item.image_url:
+        delete_stored_image(previous_image)
     return item
 
 
@@ -101,5 +107,7 @@ def delete_item(
     get_owned_wishlist(db, wishlist_id, current_user)
     item = _get_item(db, wishlist_id, item_id)
 
+    previous_image = item.image_url
     db.delete(item)
     db.commit()
+    delete_stored_image(previous_image)

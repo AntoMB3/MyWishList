@@ -86,7 +86,7 @@ class WishlistItem(Base):
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     description: Mapped[str | None] = mapped_column(Text)
     url: Mapped[str] = mapped_column(String(2048))
-    image_url: Mapped[str] = mapped_column(String(2048))
+    image_url: Mapped[str | None] = mapped_column(String(2048))
     wishlist_id: Mapped[int] = mapped_column(
         ForeignKey("wishlists.id", ondelete="CASCADE"),
         index=True,

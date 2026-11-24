@@ -193,17 +193,36 @@
         </div>
 
         <div class="field field--full">
-          <label class="field__label" for="item-image">Link de la imagen <span class="req">*</span></label>
-          <input class="input" id="item-image" name="image_url" type="url"
-                 placeholder="https://tienda.com/imagen.jpg" required>
-          <span class="field__hint">Si el enlace falla, se mostrará una imagen de respaldo.</span>
+          <span class="field__label">Imagen del producto</span>
+          <input class="input" id="item-image" name="image_url" type="text"
+                 inputmode="url" autocomplete="off"
+                 placeholder="https://tienda.com/imagen.jpg (opcional)">
+          <div class="image-actions">
+            <button class="btn btn--ghost" type="button" id="item-image-fetch">
+              Buscar imagen
+            </button>
+            <button class="btn btn--ghost" type="button" id="item-image-upload">
+              Subir foto
+            </button>
+            <button class="btn btn--ghost" type="button" id="item-image-clear" hidden>
+              Quitar imagen
+            </button>
+            <input id="item-image-file" type="file"
+                   accept="image/jpeg,image/png,image/webp" hidden>
+          </div>
+          <span class="field__hint" id="item-image-status">
+            Pega el enlace del producto y pulsa «Buscar imagen», pega directamente
+            el enlace de la imagen, o sube una foto. También puedes dejarlo sin imagen.
+          </span>
         </div>
 
         <div class="image-preview">
           <img class="image-preview__img" id="item-image-preview" src="assets/image-icon.svg"
                alt="Vista previa de la imagen del artículo"
                onerror="this.onerror=null;this.src='assets/image-icon.svg'">
-          <span class="image-preview__text">Vista previa de la imagen.<br>Pega un enlace para actualizarla.</span>
+          <span class="image-preview__text" id="item-image-preview-text">
+            Sin imagen. La tarjeta usará una ilustración de respaldo.
+          </span>
         </div>
 
         <div class="field">

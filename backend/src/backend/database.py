@@ -44,3 +44,33 @@ def create_db_engine(database_url: str, **engine_kwargs: Any) -> Engine:
 engine = create_db_engine(settings.database_url)
 
 SessionLocal = sessionmaker(bind=engine, class_=Session, autoflush=False, expire_on_commit=False)
+
+
+def migrate_image_url_nullable(db_engine: Engine) -> None:
+    """Quita el `NOT NULL` de `wishlist_items.image_url` en bases ya creadas.
+
+    `create_all` no modifica columnas existentes. SQLite no permite cambiar
+    una restricción con `ALTER COLUMN`, así que se copia el valor a una
+    columna temporal y se reemplaza la original (SQLite >= 3.35).
+    """
+    if db_engine.dialect.name != "sqlite":
+        return
+
+    with db_engine.begin() as connection:
+        columns = connection.exec_driver_sql(
+            "PRAGMA table_info(wishlist_items)"
+        ).mappings().all()
+        target = next((row for row in columns if row["name"] == "image_url"), None)
+        if target is None or not target["notnull"]:
+            return
+
+        connection.exec_driver_sql(
+            "ALTER TABLE wishlist_items ADD COLUMN image_url_tmp VARCHAR(2048)"
+        )
+        connection.exec_driver_sql(
+            "UPDATE wishlist_items SET image_url_tmp = image_url"
+        )
+        connection.exec_driver_sql("ALTER TABLE wishlist_items DROP COLUMN image_url")
+        connection.exec_driver_sql(
+            "ALTER TABLE wishlist_items RENAME COLUMN image_url_tmp TO image_url"
+        )

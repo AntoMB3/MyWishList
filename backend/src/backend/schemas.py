@@ -4,6 +4,7 @@ Desacoplan los modelos ORM de lo que se expone en JSON: `hashed_password`
 nunca forma parte de ningún esquema de respuesta.
 """
 
+import re
 from datetime import datetime
 from decimal import Decimal
 from typing import Annotated
@@ -13,6 +14,7 @@ from pydantic import (
     ConfigDict,
     Field,
     HttpUrl,
+    TypeAdapter,
     UrlConstraints,
     field_validator,
 )
@@ -23,6 +25,8 @@ SHARE_ID_LENGTH = 32
 MAX_URL_LENGTH = 2048
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
+# Archivos propios servidos por la API (`GET /media/<uuid>.webp`).
+MEDIA_URL_PATTERN = r"^/media/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.webp$"
 
 # HttpUrl ya restringe los esquemas a http/https (bloquea vectores como
 # `javascript:`); limitamos además la longitud a la de las columnas de la BD.
@@ -30,6 +34,8 @@ ArticleUrl = Annotated[
     HttpUrl,
     UrlConstraints(max_length=MAX_URL_LENGTH, allowed_schemes=["http", "https"]),
 ]
+
+_ArticleUrlAdapter = TypeAdapter(ArticleUrl)
 
 
 class UserBase(BaseModel):
@@ -87,7 +93,7 @@ class ItemBase(BaseModel):
     price: Decimal = Field(ge=Decimal("0"), max_digits=10, decimal_places=2)
     description: str | None = Field(default=None, max_length=2000)
     url: ArticleUrl
-    image_url: ArticleUrl
+    image_url: str | None = Field(default=None, max_length=MAX_URL_LENGTH)
 
     @field_validator("title")
     @classmethod
@@ -104,6 +110,19 @@ class ItemBase(BaseModel):
             return None
         value = value.strip()
         return value or None
+
+    @field_validator("image_url")
+    @classmethod
+    def validate_image_url(cls, value: str | None) -> str | None:
+        """Acepta una URL externa http(s) o una ruta local `/media/...`."""
+        if value is None:
+            return None
+        value = value.strip()
+        if not value:
+            return None
+        if re.fullmatch(MEDIA_URL_PATTERN, value):
+            return value
+        return str(_ArticleUrlAdapter.validate_python(value))
 
 
 class ItemCreate(ItemBase):
@@ -124,7 +143,7 @@ class ItemResponse(BaseModel):
     price: Decimal
     description: str | None
     url: str
-    image_url: str
+    image_url: str | None
     wishlist_id: int
     created_at: datetime
 
@@ -183,3 +202,21 @@ class WishlistPublicResponse(BaseModel):
     owner_username: str
     created_at: datetime
     items: list[ItemResponse]
+
+
+class UnfurlRequest(BaseModel):
+    """Enlace del producto del que se intentará extraer la imagen."""
+
+    url: ArticleUrl
+
+
+class UnfurlResponse(BaseModel):
+    """Imagen encontrada en el enlace, o `None` si no se pudo obtener."""
+
+    image_url: str | None
+
+
+class MediaUploadResponse(BaseModel):
+    """Imagen propia ya comprimida y almacenada en el servidor."""
+
+    image_url: str

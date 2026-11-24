@@ -11,10 +11,12 @@ import {
   createWishlist,
   deleteItem,
   deleteWishlist,
+  fetchProductImage,
   getMyWishlists,
   getSharedWishlist,
   updateItem,
   updateWishlist,
+  uploadProductImage,
 } from "./api.js";
 import {
   bindLogoutButtons,
@@ -436,7 +438,7 @@ function applyItemDataToCard(card, item) {
   card.dataset.description = item.description || "";
   card.dataset.price = String(item.price);
   card.dataset.url = item.url;
-  card.dataset.image = item.image_url;
+  card.dataset.image = item.image_url || "";
 
   const image = $(".item-card__img", card);
   if (image) {
@@ -851,6 +853,12 @@ async function initWishlistDetailPage() {
   const priceInput = $("#item-price");
   const urlInput = $("#item-url");
   const imageInput = $("#item-image");
+  const imageFileInput = $("#item-image-file");
+  const imageFetchButton = $("#item-image-fetch");
+  const imageUploadButton = $("#item-image-upload");
+  const imageClearButton = $("#item-image-clear");
+  const imageStatus = $("#item-image-status");
+  const imagePreviewText = $("#item-image-preview-text");
   const descriptionInput = $("#item-description");
   const imagePreview = $("#item-image-preview");
 
@@ -921,20 +929,140 @@ async function initWishlistDetailPage() {
 
   searchInput?.addEventListener("input", filterCards);
 
-  function updatePreview() {
-    if (!imagePreview) return;
-    const value = imageInput?.value.trim() ?? "";
-    const isUsable =
-      /^https?:\/\//i.test(value) || value.startsWith("assets/");
-    imagePreview.src = isUsable ? value : PREVIEW_IMAGE;
+  function isUsableImage(value) {
+    return (
+      /^https?:\/\//i.test(value) ||
+      /^\/media\/[0-9a-f-]+\.webp$/i.test(value)
+    );
   }
 
-  imageInput?.addEventListener("input", updatePreview);
+  function applyImagePreview(value) {
+    const normalized = isUsableImage(value ?? "") ? value.trim() : "";
+    if (imagePreview) imagePreview.src = normalized || PREVIEW_IMAGE;
+    if (imageClearButton) imageClearButton.hidden = !normalized;
+    if (imagePreviewText) {
+      imagePreviewText.textContent = normalized
+        ? "Vista previa de la imagen."
+        : "Sin imagen. La tarjeta usará una ilustración de respaldo.";
+    }
+  }
+
+  function setImageValue(value, message) {
+    const normalized = isUsableImage(value ?? "") ? value.trim() : "";
+    if (imageInput) imageInput.value = normalized;
+    applyImagePreview(normalized);
+    if (message && imageStatus) imageStatus.textContent = message;
+  }
+
+  /* Enlace pegado a mano: solo se previsualiza, sin reescribir el campo. */
+  imageInput?.addEventListener("input", () => {
+    const value = imageInput.value.trim();
+    applyImagePreview(value);
+    if (imageStatus) {
+      imageStatus.textContent = isUsableImage(value)
+        ? "Enlace de imagen listo."
+        : "Pega un enlace http(s) de imagen, o usa los botones.";
+    }
+  });
+
+  async function handleImageFile(file) {
+    if (!file || !file.type.startsWith("image/")) {
+      showToast("Elige un archivo de imagen.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("La imagen no puede pesar más de 5 MB.");
+      return;
+    }
+
+    if (imageUploadButton) imageUploadButton.disabled = true;
+    if (imageStatus) imageStatus.textContent = "Comprimiendo y subiendo la foto…";
+
+    try {
+      const data = await uploadProductImage(file);
+      setImageValue(
+        data?.image_url ?? "",
+        "Foto lista y guardada en el servidor."
+      );
+    } catch (error) {
+      if (error?.status === 401) {
+        logout("login.html");
+        return;
+      }
+      if (imageStatus) imageStatus.textContent = "No se pudo subir la foto.";
+      showToast(error?.message || "No se pudo subir la foto.");
+    } finally {
+      if (imageUploadButton) imageUploadButton.disabled = false;
+    }
+  }
+
+  imageFetchButton?.addEventListener("click", async () => {
+    const url = urlInput?.value.trim() ?? "";
+    if (!url) {
+      urlInput?.focus();
+      showToast("Primero pega el enlace del producto.");
+      return;
+    }
+
+    const originalLabel = imageFetchButton.textContent;
+    imageFetchButton.disabled = true;
+    imageFetchButton.textContent = "Buscando…";
+    if (imageStatus) imageStatus.textContent = "Buscando la imagen en el enlace…";
+
+    try {
+      const data = await fetchProductImage(url);
+      if (data?.image_url) {
+        setImageValue(data.image_url, "Imagen encontrada en el enlace del producto.");
+      } else if (imageStatus) {
+        imageStatus.textContent =
+          "No se encontró una imagen en ese enlace. Puedes subir una foto.";
+      }
+    } catch (error) {
+      if (error?.status === 401) {
+        logout("login.html");
+        return;
+      }
+      if (imageStatus) {
+        imageStatus.textContent =
+          "No se pudo leer el enlace. Puedes subir una foto.";
+      }
+      showToast(error?.message || "No se pudo buscar la imagen.");
+    } finally {
+      imageFetchButton.disabled = false;
+      imageFetchButton.textContent = originalLabel;
+    }
+  });
+
+  imageUploadButton?.addEventListener("click", () => imageFileInput?.click());
+
+  imageFileInput?.addEventListener("change", async () => {
+    const file = imageFileInput.files?.[0];
+    if (file) await handleImageFile(file);
+    imageFileInput.value = "";
+  });
+
+  imageClearButton?.addEventListener("click", () => {
+    setImageValue("", "Imagen quitada. La tarjeta usará la ilustración de respaldo.");
+  });
+
+  /* Pegar una imagen copiada o una captura de pantalla con Ctrl+V. */
+  modal?.addEventListener("paste", (event) => {
+    const items = [...(event.clipboardData?.items ?? [])];
+    const imageItem = items.find((item) => item.type.startsWith("image/"));
+    if (!imageItem) return;
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    event.preventDefault();
+    handleImageFile(file);
+  });
 
   function resetForm() {
     editingCard = null;
     form?.reset();
-    if (imagePreview) imagePreview.src = PREVIEW_IMAGE;
+    setImageValue(
+      "",
+      "Pega el enlace del producto y pulsa «Buscar imagen», pega el enlace directo de la imagen, o sube una foto."
+    );
     if (modalTitle) modalTitle.textContent = "Nuevo artículo";
     if (modalSub) {
       modalSub.textContent =
@@ -948,9 +1076,8 @@ async function initWishlistDetailPage() {
     if (titleInput) titleInput.value = card.dataset.title ?? "";
     if (priceInput) priceInput.value = card.dataset.price ?? "";
     if (urlInput) urlInput.value = card.dataset.url ?? "";
-    if (imageInput) imageInput.value = card.dataset.image ?? "";
     if (descriptionInput) descriptionInput.value = card.dataset.description ?? "";
-    updatePreview();
+    setImageValue(card.dataset.image ?? "");
     if (modalTitle) modalTitle.textContent = "Editar artículo";
     if (modalSub) modalSub.textContent = "Actualiza los datos del artículo.";
     if (submitLabel) submitLabel.textContent = "Guardar cambios";
@@ -994,11 +1121,18 @@ async function initWishlistDetailPage() {
       event.preventDefault();
       if (!form.reportValidity()) return;
 
+      const imageValue = imageInput?.value.trim() ?? "";
+      if (imageValue && !isUsableImage(imageValue)) {
+        imageInput?.focus();
+        showToast("El enlace de la imagen debe empezar por http:// o https://.");
+        return;
+      }
+
       const payload = {
         title: titleInput?.value.trim() ?? "",
         price: priceInput?.value.trim() ?? "0",
         url: urlInput?.value.trim() ?? "",
-        image_url: imageInput?.value.trim() ?? "",
+        image_url: imageValue || null,
         description: descriptionInput?.value.trim() ?? "",
       };
 

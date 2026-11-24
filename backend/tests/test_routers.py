@@ -1,13 +1,17 @@
 from collections.abc import Iterator
 from datetime import UTC, datetime
 from decimal import Decimal
+from io import BytesIO
+from pathlib import Path
 from typing import Any
 
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
+from PIL import Image
 from sqlalchemy.orm import Session
 
+from backend.config import settings
 from backend.dependencies import get_current_user, get_db
 from backend.main import app
 from backend.models import User, Wishlist, WishlistItem
@@ -20,7 +24,7 @@ from backend.schemas import (
     WishlistPublicResponse,
     WishlistUpdate,
 )
-from backend.services import auth_service, item_service, wishlist_service
+from backend.services import auth_service, item_service, media_service, wishlist_service
 
 CREATED_AT = datetime(2026, 1, 1, tzinfo=UTC)
 SHARE_ID = "a" * 32
@@ -384,6 +388,42 @@ class TestItemsRouter:
         )
         assert response.status_code == 422
 
+    def test_create_accepts_item_without_image(
+        self,
+        authenticated_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        def fake_create(
+            db: Session,
+            wishlist_id: int,
+            item_in: ItemCreate,
+            current_user: User,
+        ) -> WishlistItem:
+            assert item_in.image_url is None
+            return WishlistItem(
+                id=11,
+                title=item_in.title,
+                price=item_in.price,
+                description=None,
+                url=str(item_in.url),
+                image_url=None,
+                wishlist_id=wishlist_id,
+                created_at=CREATED_AT,
+            )
+
+        monkeypatch.setattr(item_service, "create_item", fake_create)
+        payload = _item_payload()
+        payload.pop("image_url")
+
+        response = authenticated_client.post(
+            "/api/wishlists/3/items",
+            headers={"Authorization": "Bearer token"},
+            json=payload,
+        )
+
+        assert response.status_code == 201
+        assert response.json()["image_url"] is None
+
     def test_create_404_when_wishlist_missing(
         self,
         authenticated_client: TestClient,
@@ -468,3 +508,115 @@ class TestItemsRouter:
         assert response.status_code == 204
         assert response.content == b""
         assert deleted == [(3, 10)]
+
+
+class TestMediaRouter:
+    @pytest.fixture()
+    def media_dir(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+        monkeypatch.setattr(settings, "media_dir", tmp_path)
+        return tmp_path
+
+    def test_unfurl_returns_found_image(
+        self,
+        authenticated_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(
+            media_service,
+            "fetch_product_image",
+            lambda url: "https://cdn.example.com/producto.jpg",
+        )
+
+        response = authenticated_client.post(
+            "/api/media/unfurl",
+            headers={"Authorization": "Bearer token"},
+            json={"url": "https://tienda.com/producto"},
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {
+            "image_url": "https://cdn.example.com/producto.jpg"
+        }
+
+    def test_unfurl_returns_null_when_not_found(
+        self,
+        authenticated_client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(
+            media_service, "fetch_product_image", lambda url: None
+        )
+
+        response = authenticated_client.post(
+            "/api/media/unfurl",
+            headers={"Authorization": "Bearer token"},
+            json={"url": "https://tienda.com/producto"},
+        )
+
+        assert response.status_code == 200
+        assert response.json() == {"image_url": None}
+
+    def test_unfurl_requires_token(self, client: TestClient) -> None:
+        response = client.post(
+            "/api/media/unfurl", json={"url": "https://tienda.com/producto"}
+        )
+        assert response.status_code == 401
+
+    def test_unfurl_rejects_invalid_url(self, authenticated_client: TestClient) -> None:
+        response = authenticated_client.post(
+            "/api/media/unfurl",
+            headers={"Authorization": "Bearer token"},
+            json={"url": "javascript:alert(1)"},
+        )
+        assert response.status_code == 422
+
+    def test_upload_stores_image_and_serves_it(
+        self,
+        authenticated_client: TestClient,
+        media_dir,
+    ) -> None:
+        buffer = BytesIO()
+        Image.new("RGB", (1200, 900), (10, 80, 160)).save(buffer, format="PNG")
+
+        upload = authenticated_client.post(
+            "/api/media",
+            headers={"Authorization": "Bearer token"},
+            files={"file": ("foto.png", buffer.getvalue(), "image/png")},
+        )
+
+        assert upload.status_code == 201
+        image_url = upload.json()["image_url"]
+        assert image_url.startswith("/media/")
+
+        served = authenticated_client.get(image_url)
+        assert served.status_code == 200
+        assert served.headers["content-type"] == "image/webp"
+
+    def test_upload_requires_token(self, client: TestClient) -> None:
+        response = client.post(
+            "/api/media",
+            files={"file": ("foto.png", b"x", "image/png")},
+        )
+        assert response.status_code == 401
+
+    def test_upload_rejects_non_image(
+        self,
+        authenticated_client: TestClient,
+        media_dir,
+    ) -> None:
+        response = authenticated_client.post(
+            "/api/media",
+            headers={"Authorization": "Bearer token"},
+            files={"file": ("nota.txt", b"no soy imagen", "image/png")},
+        )
+        assert response.status_code == 400
+
+    def test_media_route_rejects_unknown_name(
+        self,
+        authenticated_client: TestClient,
+        media_dir,
+    ) -> None:
+        assert authenticated_client.get("/media/inexistente.webp").status_code == 404
+        assert (
+            authenticated_client.get("/media/../whishlist.db").status_code == 404
+        )

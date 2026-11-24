@@ -89,6 +89,26 @@ class TestItemSchemas:
     def test_response_does_not_expose_private_fields(self) -> None:
         assert "hashed_password" not in ItemResponse.model_fields
 
+    def test_image_is_optional(self) -> None:
+        payload = _item_payload()
+        payload.pop("image_url")
+
+        assert ItemCreate.model_validate(payload).image_url is None
+
+    @pytest.mark.parametrize("value", ["", "   ", None])
+    def test_blank_image_becomes_none(self, value: str | None) -> None:
+        assert ItemCreate.model_validate(_item_payload(image_url=value)).image_url is None
+
+    def test_accepts_stored_media_path(self) -> None:
+        path = "/media/2f1c9d8e-7a4b-4c3d-9e2f-1a2b3c4d5e6f.webp"
+        assert ItemCreate.model_validate(_item_payload(image_url=path)).image_url == path
+
+    def test_rejects_media_path_traversal(self) -> None:
+        with pytest.raises(ValidationError):
+            ItemCreate.model_validate(
+                _item_payload(image_url="/media/../whishlist.db")
+            )
+
 
 class TestWishlistSchemas:
     def test_title_is_trimmed(self) -> None:

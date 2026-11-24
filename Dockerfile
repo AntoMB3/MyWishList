@@ -11,7 +11,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     PORT=8000 \
-    DATABASE_URL=sqlite:////data/whishlist.db
+    DATABASE_URL=sqlite:////data/whishlist.db \
+    MEDIA_DIR=/data/media
 
 WORKDIR /app
 
@@ -30,7 +31,7 @@ WORKDIR /app/backend
 RUN uv sync --frozen --no-dev --no-editable
 
 # Directorio persistente para la base de datos SQLite y usuario no-root
-RUN mkdir -p /data && \
+RUN mkdir -p /data/media && \
     adduser --disabled-password --gecos "" appuser && \
     chown -R appuser:appuser /app /data
 

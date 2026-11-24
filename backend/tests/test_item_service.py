@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from backend.models import User, Wishlist, WishlistItem
+from backend.config import settings
 from backend.schemas import ItemCreate, ItemUpdate
 from backend.services import item_service
 
@@ -256,3 +257,72 @@ class TestDeleteItem:
 
         assert exc_info.value.status_code == 403
         assert session.get(WishlistItem, item.id) is not None
+
+
+class TestStoredImageCleanup:
+    def test_item_can_be_created_without_image(self, session: Session) -> None:
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex)
+        payload = _item_payload()
+        payload.pop("image_url")
+
+        item = item_service.create_item(
+            session, wishlist.id, ItemCreate(**payload), alex
+        )
+
+        assert item.image_url is None
+
+    def test_delete_item_removes_stored_file(
+        self,
+        session: Session,
+        tmp_path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "media_dir", tmp_path)
+        filename = "2f1c9d8e-7a4b-4c3d-9e2f-1a2b3c4d5e6f.webp"
+        stored = tmp_path / filename
+        stored.write_bytes(b"webp")
+        image_url = f"/media/{filename}"
+
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex)
+        item = item_service.create_item(
+            session,
+            wishlist.id,
+            ItemCreate(**_item_payload(image_url=image_url)),
+            alex,
+        )
+
+        item_service.delete_item(session, wishlist.id, item.id, alex)
+
+        assert not stored.exists()
+
+    def test_replacing_stored_image_removes_previous_file(
+        self,
+        session: Session,
+        tmp_path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "media_dir", tmp_path)
+        filename = "3f1c9d8e-7a4b-4c3d-9e2f-1a2b3c4d5e6f.webp"
+        stored = tmp_path / filename
+        stored.write_bytes(b"webp")
+
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex)
+        item = item_service.create_item(
+            session,
+            wishlist.id,
+            ItemCreate(**_item_payload(image_url=f"/media/{filename}")),
+            alex,
+        )
+
+        item_service.update_item(
+            session,
+            wishlist.id,
+            item.id,
+            ItemUpdate(**_item_payload(image_url=None)),
+            alex,
+        )
+
+        assert not stored.exists()

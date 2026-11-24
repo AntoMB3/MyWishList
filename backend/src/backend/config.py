@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str = f"sqlite:///{BASE_DIR / 'whishlist.db'}"
+    media_dir: Path = BASE_DIR / "media"
     secret_key: SecretStr = SecretStr(DEFAULT_DEV_SECRET_KEY)
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 24 * 60

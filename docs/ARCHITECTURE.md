@@ -12,7 +12,10 @@
    - **Precio** (Obligatorio, numérico `>= 0`)
    - **Descripción** (Opcional)
    - **Link del artículo (`url`)** (Obligatorio, validado como URL HTTP/HTTPS)
-   - **Link de imagen (`image_url`)** (Obligatorio/con fallback visual en frontend)
+   - **Imagen (`image_url`)** (Opcional). Se intenta obtener del enlace del
+     producto (Open Graph / Twitter Cards / JSON-LD), se pega el enlace directo
+     de la imagen, o se sube una foto que se comprime a WebP y se guarda en el
+     servidor. Sin imagen, la tarjeta usa una ilustración de respaldo.
 
 ---
 
@@ -43,12 +46,15 @@ MyWhishList/
 │   │   ├── __init__.py
 │   │   ├── auth_service.py      # Creación y verificación de usuarios
 │   │   ├── wishlist_service.py  # CRUD de wishlists y compartición por share_id
-│   │   └── item_service.py      # CRUD de artículos y verificación de propiedad
-│   └── routers/             # Capa de controladores HTTP (Endpoints)
-│       ├── __init__.py
-│       ├── auth.py          # /api/auth (register, login, me)
-│       ├── wishlists.py     # /api/wishlists (mis listas, crear, ver por share_id)
-│       └── items.py         # /api/wishlists/{wishlist_id}/items (POST, PUT, DELETE)
+│   │   ├── item_service.py      # CRUD de artículos y verificación de propiedad
+│   │   └── media_service.py     # Open Graph (unfurl) y compresión de fotos
+│   ├── routers/             # Capa de controladores HTTP (Endpoints)
+│   │   ├── __init__.py
+│   │   ├── auth.py          # /api/auth (register, login, me)
+│   │   ├── wishlists.py     # /api/wishlists (mis listas, crear, ver por share_id)
+│   │   ├── items.py         # /api/wishlists/{wishlist_id}/items (POST, PUT, DELETE)
+│   │   └── media.py         # /api/media (unfurl, subida) y /media/{archivo}
+│   └── media/               # Fotos subidas en desarrollo (Docker: /data/media)
 │
 ├── frontend/
 │   ├── index.html           # Vista principal (Modo Visitante y Modo Autor)
@@ -113,7 +119,7 @@ MyWhishList/
 | `price` | `NUMERIC(10, 2)` | `NOT NULL, CHECK(price >= 0)` | Precio del artículo |
 | `description` | `TEXT` | `NULLABLE` | Notas o detalles opcionales |
 | `url` | `VARCHAR(2048)` | `NOT NULL` | Enlace a la tienda en línea |
-| `image_url` | `VARCHAR(2048)` | `NOT NULL` | Enlace a la imagen del producto |
+| `image_url` | `VARCHAR(2048)` | `NULLABLE` | URL externa o ruta propia `/media/<uuid>.webp` |
 | `wishlist_id` | `INTEGER` | `FOREIGN KEY (wishlists.id) ON DELETE CASCADE` | Lista a la que pertenece |
 | `created_at` | `DATETIME` | `DEFAULT CURRENT_TIMESTAMP` | Fecha de creación |
 
@@ -171,6 +177,9 @@ MyWhishList/
 | `POST` | `/api/wishlists/{wishlist_id}/items` | **Protegido (Autor)** | Crea un artículo en una lista propia | `201`, `401`, `403`, `404`, `422` |
 | `PUT` | `/api/wishlists/{wishlist_id}/items/{item_id}` | **Protegido (Autor)** | Edita un artículo propio | `200`, `401`, `403`, `404`, `422` |
 | `DELETE` | `/api/wishlists/{wishlist_id}/items/{item_id}` | **Protegido (Autor)** | Elimina un artículo propio | `204`, `401`, `403`, `404` |
+| `POST` | `/api/media/unfurl` | **Protegido** | Busca la imagen del enlace del producto | `200`, `401`, `422` |
+| `POST` | `/api/media` | **Protegido** | Sube una foto, la comprime y la guarda | `201`, `400`, `401`, `413` |
+| `GET` | `/media/{archivo}` | Público | Sirve una foto almacenada | `200`, `404` |
 
 ---
 
@@ -188,7 +197,7 @@ MyWhishList/
      `id` numérico ni el `username`, para evitar recorrer listas ajenas.
    - No existe endpoint de listado global de wishlists.
 2. **Prevención de XSS (Cross-Site Scripting):**
-   - **En Backend:** Validar que `url` e `image_url` utilicen exclusivamente esquemas `http://` o `https://` mediante `HttpUrl` de Pydantic (bloqueando vectores como `javascript:alert(1)`).
+   - **En Backend:** Validar que `url` utilice exclusivamente esquemas `http://` o `https://` mediante `HttpUrl` de Pydantic (bloqueando vectores como `javascript:alert(1)`). `image_url` acepta solo una URL http(s) o una ruta propia con formato `/media/<uuid>.webp`.
    - **En Frontend:** Prohibido concatenar datos del usuario dentro de `.innerHTML`. Se debe construir el DOM con `document.createElement()` y asignar textos mediante `.textContent`.
    - En los enlaces `<a href="...">`, incluir siempre `target="_blank" rel="noopener noreferrer"`.
 3. **Seguridad de Contraseñas y JWT:**
@@ -200,6 +209,11 @@ MyWhishList/
 5. **Manejo de Imágenes Rotos (Broken Links) y Precios:**
    - Los elementos `<img>` tendrán un manejador `onerror` para cargar un SVG/imagen *placeholder* local si la tienda externa bloquea la imagen o el link caduca.
    - Los precios se almacenan como `Numeric(10, 2)` / `Decimal` en Python para evitar errores de precisión de punto flotante (`float`).
+6. **Imágenes de artículos (Open Graph y subida):**
+   - `POST /api/media/unfurl` solo lee el HTML del enlace: no descarga ni rehospeda imágenes ajenas. Para evitar SSRF, cada petición y cada redirección exige `http`/`https` y una IP pública (rechaza localhost, rangos privados, link-local y metadata de cloud).
+   - `POST /api/media` valida el contenido real (JPEG/PNG/WebP), limita a 5 MB, quita el EXIF, reduce el lado mayor a 800 px y guarda WebP calidad 75 con nombre UUID.
+   - `GET /media/{archivo}` solo acepta nombres con formato UUID `.webp`, sin listado de directorio. Las fotos se sirven con caché larga e inmutable.
+   - Al borrar un artículo o reemplazar su foto se elimina el archivo propio anterior.
 
 ---
 

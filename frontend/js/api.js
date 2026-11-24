@@ -260,3 +260,23 @@ export async function deleteItem(wishlistId, itemId) {
     }
   );
 }
+
+/* --------------------------------------------------------------------------
+   Imágenes de artículos (/api/media)
+   -------------------------------------------------------------------------- */
+
+export async function fetchProductImage(url) {
+  return apiFetch("/api/media/unfurl", {
+    method: "POST",
+    body: { url },
+  });
+}
+
+export async function uploadProductImage(file) {
+  const form = new FormData();
+  form.append("file", file);
+  return apiFetch("/api/media", {
+    method: "POST",
+    body: form,
+  });
+}
