@@ -1,0 +1,26 @@
+# Git
+.git
+.gitignore
+
+# Entornos virtuales y cachés de Python
+**/.venv
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.pytest_cache
+.ruff_cache
+.mypy_cache
+
+# Bases de datos locales y secretos
+**/*.db
+**/*.db-journal
+**/*.db-wal
+.env
+backend/.env
+
+# Tests y documentación
+backend/tests
+docs
+*.md
+!backend/README.md
