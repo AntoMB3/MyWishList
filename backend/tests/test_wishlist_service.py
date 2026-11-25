@@ -245,6 +245,52 @@ class TestDeleteWishlist:
         assert session.get(Wishlist, wishlist_id) is None
         assert session.scalar(select(func.count()).select_from(WishlistItem)) == 0
 
+    def test_removes_stored_images_of_its_items(
+        self,
+        session: Session,
+        tmp_path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "media_dir", tmp_path)
+        first = "2f1c9d8e-7a4b-4c3d-9e2f-1a2b3c4d5e6f.webp"
+        second = "3f1c9d8e-7a4b-4c3d-9e2f-1a2b3c4d5e6f.webp"
+        stored = [tmp_path / first, tmp_path / second]
+        for path in stored:
+            path.write_bytes(b"webp")
+
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex)
+        for filename in (first, second):
+            item = _add_item(session, wishlist, f"Artículo {filename[0]}")
+            item.image_url = f"/media/{filename}"
+        session.commit()
+
+        wishlist_service.delete_wishlist(session, wishlist.id, alex)
+
+        assert all(not path.exists() for path in stored)
+
+    def test_ignores_external_images_and_missing_files(
+        self,
+        session: Session,
+        tmp_path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        monkeypatch.setattr(settings, "media_dir", tmp_path)
+        alex = _add_user(session)
+        wishlist = _add_wishlist(session, alex)
+        external = _add_item(session, wishlist, "Externo")
+        external.image_url = "https://example.com/articulo.png"
+        missing = _add_item(session, wishlist, "Sin archivo")
+        missing.image_url = (
+            "/media/9f1c9d8e-7a4b-4c3d-9e2f-1a2b3c4d5e6f.webp"
+        )
+        session.commit()
+
+        # No debe lanzar por la URL externa ni por el archivo ausente.
+        wishlist_service.delete_wishlist(session, wishlist.id, alex)
+
+        assert session.get(Wishlist, wishlist.id) is None
+
     def test_raises_404_when_wishlist_does_not_exist(self, session: Session) -> None:
         alex = _add_user(session)
 

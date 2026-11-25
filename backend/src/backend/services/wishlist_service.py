@@ -17,6 +17,7 @@ from backend.schemas import (
     WishlistPublicResponse,
     WishlistUpdate,
 )
+from backend.services.media_service import delete_stored_image
 
 _WISHLIST_NOT_FOUND = HTTPException(
     status_code=status.HTTP_404_NOT_FOUND,
@@ -142,10 +143,22 @@ def update_wishlist(
 def delete_wishlist(db: Session, wishlist_id: int, current_user: User) -> None:
     """Elimina una wishlist y, en cascada, sus artículos.
 
+    También borra del disco las fotos propias de los artículos: la cascada
+    de la base de datos no pasa por `item_service`, así que sin esto los
+    WebP quedarían huérfanos en el volumen para siempre.
+
     Contrato: lanza `HTTPException(404)` si la wishlist no existe y
     `HTTPException(403)` si pertenece a otro usuario.
     """
     wishlist = get_owned_wishlist(db, wishlist_id, current_user)
 
+    # Se recopilan antes del commit: la cascada elimina los artículos y con
+    # ellos sus referencias a las imágenes.
+    image_urls = [item.image_url for item in wishlist.items if item.image_url]
+
     db.delete(wishlist)
     db.commit()
+
+    # Se borran del disco solo si el commit fue correcto.
+    for image_url in image_urls:
+        delete_stored_image(image_url)

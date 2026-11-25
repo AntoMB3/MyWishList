@@ -4,8 +4,17 @@ API REST en FastAPI + SQLAlchemy para MyWishList.
 
 ## Desarrollo
 
+La aplicación **se niega a arrancar sin `SECRET_KEY`**: usar la clave pública
+de desarrollo permitiría forjar tokens JWT de cualquier usuario. Para levantar
+el entorno local:
+
 ```bash
 cd backend
+cp .env.example .env
+# Edita .env y define una SECRET_KEY propia, por ejemplo:
+#   SECRET_KEY=$(openssl rand -hex 32)
+# Swagger UI (/docs) se oculta al usar una clave real; si la quieres en
+# desarrollo, añade ENABLE_DOCS=1 al .env.
 uv sync
 uv run uvicorn backend.main:app --reload
 ```

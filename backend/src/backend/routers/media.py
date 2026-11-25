@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse
 
 from backend.dependencies import get_current_user
 from backend.models import User
+from backend.rate_limit import authenticated_rate_limit
 from backend.schemas import (
     MediaUploadResponse,
     UnfurlRequest,
@@ -30,6 +31,9 @@ media_router = APIRouter(tags=["media"])
     "/unfurl",
     response_model=UnfurlResponse,
     summary="Buscar la imagen principal del enlace de un producto",
+    dependencies=[
+        Depends(authenticated_rate_limit("unfurl", "rate_limit_unfurl_per_minute", 60))
+    ],
 )
 def unfurl_image(
     payload: UnfurlRequest,
@@ -44,6 +48,9 @@ def unfurl_image(
     response_model=MediaUploadResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Subir una foto del producto (se comprime a WebP)",
+    dependencies=[
+        Depends(authenticated_rate_limit("media", "rate_limit_media_per_minute", 60))
+    ],
 )
 async def upload_image(
     _current_user: Annotated[User, Depends(get_current_user)],

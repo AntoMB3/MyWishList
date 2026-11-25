@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from backend.dependencies import get_current_user, get_db
 from backend.models import User
+from backend.rate_limit import anonymous_rate_limit
 from backend.schemas import (
     PasswordChange,
     TokenResponse,
@@ -78,6 +79,9 @@ async def login_credentials(request: Request) -> UserLogin:
     status_code=status.HTTP_201_CREATED,
     response_model=UserResponse,
     summary="Registrar un usuario",
+    dependencies=[
+        Depends(anonymous_rate_limit("register", "rate_limit_register_per_hour", 3600))
+    ],
 )
 def register(
     user_in: UserCreate,
@@ -91,6 +95,9 @@ def register(
     response_model=TokenResponse,
     openapi_extra=LOGIN_OPENAPI_EXTRA,
     summary="Autenticar y obtener un token JWT",
+    dependencies=[
+        Depends(anonymous_rate_limit("login", "rate_limit_login_per_minute", 60))
+    ],
 )
 def login(
     credentials: Annotated[UserLogin, Depends(login_credentials)],
