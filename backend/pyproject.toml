@@ -15,6 +15,8 @@ dependencies = [
     "pydantic>=2.14.3",
     "pydantic-settings>=2.16.3",
     "pyjwt>=2.15.1",
+    "pymysql>=1.1.2",
+    "psycopg[binary]>=3.2.0",
     "python-multipart>=0.0.34",
     "sqlalchemy>=2.1.9",
     "uvicorn[standard]>=0.54.0",
@@ -23,6 +25,7 @@ dependencies = [
 [project.scripts]
 backend = "backend.main:main"
 reset-password = "backend.cli:main"
+migrate-db = "backend.cli:migrate_db_main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

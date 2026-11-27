@@ -54,3 +54,34 @@ docker exec -it <contenedor> uv run --no-sync reset-password alex
 
 Si el usuario no existe, el comando termina con código `1`; si la contraseña
 indicada no cumple la longitud permitida (8–128 caracteres), termina con `2`.
+
+## Cambiar o migrar de base de datos (PostgreSQL / MySQL)
+
+El proyecto incluye los drivers para **SQLite** (por defecto), **PostgreSQL**
+(`psycopg`) y **MySQL / MariaDB** (`pymysql`). Para usar otra base de datos,
+cambia `DATABASE_URL` en `.env`:
+
+```dotenv
+# PostgreSQL
+DATABASE_URL=postgresql+psycopg://usuario:clave@host:5432/mywishlist
+
+# MySQL / MariaDB
+DATABASE_URL=mysql+pymysql://usuario:clave@host:3306/mywishlist
+```
+
+También se aceptan los esquemas abreviados `postgres://`, `postgresql://` y
+`mysql://` que entregan proveedores cloud.
+
+Para copiar los datos existentes de SQLite (o de cualquier base origen) a la
+nueva base de datos vacía:
+
+```bash
+uv run migrate-db --from sqlite:///./whishlist.db --to postgresql+psycopg://usuario:clave@host:5432/mywishlist
+```
+
+Si ya actualizaste `DATABASE_URL` en `.env` con el nuevo destino, puedes omitir
+`--to`:
+
+```bash
+uv run migrate-db --from sqlite:///./whishlist.db
+```

@@ -9,7 +9,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend import main
-from backend.database import create_db_engine, migrate_users_token_version
+from backend.database import (
+    create_db_engine,
+    migrate_users_token_version,
+    normalize_database_url,
+)
 from backend.models import User, Wishlist, WishlistItem
 
 EXPECTED_TABLES = {"users", "wishlists", "wishlist_items"}
@@ -207,3 +211,46 @@ def test_username_must_be_unique(session: Session) -> None:
     with pytest.raises(IntegrityError):
         session.commit()
     session.rollback()
+
+
+@pytest.mark.parametrize(
+    ("raw_url", "expected"),
+    [
+        ("sqlite:///./whishlist.db", "sqlite:///./whishlist.db"),
+        (
+            "postgres://user:pass@host:5432/db",
+            "postgresql+psycopg://user:pass@host:5432/db",
+        ),
+        (
+            "postgresql://user:pass@host:5432/db",
+            "postgresql+psycopg://user:pass@host:5432/db",
+        ),
+        (
+            "postgresql+psycopg://user:pass@host:5432/db",
+            "postgresql+psycopg://user:pass@host:5432/db",
+        ),
+        (
+            "mysql://user:pass@host:3306/db",
+            "mysql+pymysql://user:pass@host:3306/db",
+        ),
+        (
+            "mysql+pymysql://user:pass@host:3306/db",
+            "mysql+pymysql://user:pass@host:3306/db",
+        ),
+    ],
+)
+def test_normalize_database_url(raw_url: str, expected: str) -> None:
+    assert normalize_database_url(raw_url) == expected
+
+
+def test_create_db_engine_supports_postgres_and_mysql_drivers() -> None:
+    pg_engine = create_db_engine("postgres://user:pass@localhost:5432/db")
+    mysql_engine = create_db_engine("mysql://user:pass@localhost:3306/db")
+    try:
+        assert pg_engine.dialect.name == "postgresql"
+        assert pg_engine.dialect.driver == "psycopg"
+        assert mysql_engine.dialect.name == "mysql"
+        assert mysql_engine.dialect.driver == "pymysql"
+    finally:
+        pg_engine.dispose()
+        mysql_engine.dispose()
